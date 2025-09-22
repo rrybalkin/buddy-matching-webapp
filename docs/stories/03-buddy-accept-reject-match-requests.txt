@@ -1,0 +1,240 @@
+USER STORY: As a buddy, I want to accept or reject match requests so I can manage my time and avoid overload.
+
+IMPLEMENTATION OVERVIEW:
+This user story is implemented through a comprehensive match request management system that allows buddies to review, accept, or reject incoming match requests while respecting their capacity limits and availability.
+
+CORE IMPLEMENTATION COMPONENTS:
+
+1. MATCH REQUEST NOTIFICATION SYSTEM
+   Location: backend/src/routes/notifications.ts and backend/src/socket/socketHandler.ts
+
+   Real-time Notifications:
+   - Instant notification when HR creates a match request
+   - Socket.io integration for real-time updates
+   - Email notifications (configurable)
+   - In-app notification center
+
+   Notification Content:
+   - Match type (NEWCOMER_MATCH, RELOCATION_SUPPORT, OFFICE_CONNECTION)
+   - Newcomer information and start date
+   - HR message and context
+   - Match timeline and expectations
+
+2. BUDDY DASHBOARD & MATCH MANAGEMENT
+   Location: frontend/src/pages/MatchesPage.tsx
+
+   Match Request Interface:
+   - List of pending match requests
+   - Detailed match information display
+   - Accept/Reject action buttons
+   - Current buddy load vs. capacity display
+   - Match history and status tracking
+
+3. MATCH RESPONSE API
+   Location: backend/src/routes/matches.ts (PATCH /api/matches/:id/respond)
+
+   Implementation Details:
+   ```typescript
+   router.patch('/:id/respond', requireRole(['BUDDY']), [
+     body('status').isIn(['ACCEPTED', 'REJECTED']),
+     body('message').optional().trim()
+   ], async (req: AuthRequest, res: Response) => {
+     // Verify ownership and status
+     const match = await prisma.match.findFirst({
+       where: {
+         id,
+         receiverId: req.user!.id,
+         status: 'PENDING'
+       }
+     });
+
+     // Check capacity before accepting
+     if (status === 'ACCEPTED') {
+       const buddyProfile = await prisma.buddyProfile.findUnique({
+         where: { userId: req.user!.id }
+       });
+       
+       const currentMatches = await prisma.match.count({
+         where: {
+           receiverId: req.user!.id,
+           status: 'ACCEPTED'
+         }
+       });
+
+       if (currentMatches >= buddyProfile.maxBuddies) {
+         return res.status(400).json({ error: 'Maximum buddy capacity reached' });
+       }
+     }
+
+     // Update match status
+     const updatedMatch = await prisma.match.update({
+       where: { id },
+       data: { status, respondedAt: new Date() }
+     });
+   });
+   ```
+
+4. CAPACITY MANAGEMENT SYSTEM
+   Location: backend/src/routes/buddies.ts
+
+   Buddy Profile Configuration:
+   ```typescript
+   model BuddyProfile {
+     maxBuddies   Int      @default(3) // Maximum number of active buddies
+     isAvailable  Boolean  @default(true)
+     // ... other fields
+   }
+   ```
+
+   Capacity Validation:
+   - Real-time capacity checking before accepting matches
+   - Visual indicators of current load vs. maximum capacity
+   - Automatic rejection when capacity is reached
+   - Capacity utilization dashboard for HR
+
+5. FRONTEND MATCH REQUEST INTERFACE
+   Location: frontend/src/pages/MatchesPage.tsx
+
+   Match Request Cards:
+   ```typescript
+   {matches?.map((match: any) => (
+     <div key={match.id} className="card">
+       <div className="flex items-center justify-between">
+         <div className="flex items-center space-x-4">
+           <div className="flex-shrink-0">
+             <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+               <span className="text-sm font-medium text-primary-600">
+                 {match.senderId === user?.id ? match.receiver.firstName[0] : match.sender.firstName[0]}
+               </span>
+             </div>
+           </div>
+           <div>
+             <h3 className="text-lg font-medium text-gray-900">
+               {match.senderId === user?.id ? match.receiver.firstName : match.sender.firstName} {match.senderId === user?.id ? match.receiver.lastName : match.sender.lastName}
+             </h3>
+             <p className="text-sm text-gray-500 capitalize">
+               {match.type.replace('_', ' ').toLowerCase()}
+             </p>
+           </div>
+         </div>
+         <div className="flex items-center space-x-2">
+           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+             match.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+             match.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+             'bg-red-100 text-red-800'
+           }`}>
+             {match.status}
+           </span>
+           {match.status === 'PENDING' && match.receiverId === user?.id && (
+             <div className="flex space-x-2">
+               <button className="btn-primary text-sm">Accept</button>
+               <button className="btn-secondary text-sm">Reject</button>
+             </div>
+           )}
+         </div>
+       </div>
+     </div>
+   ))}
+   ```
+
+6. RESPONSE TRACKING & HISTORY
+   Location: backend/src/routes/matches.ts
+
+   Match Status Tracking:
+   - PENDING: Awaiting buddy response
+   - ACCEPTED: Buddy accepted the match
+   - REJECTED: Buddy rejected the match
+   - COMPLETED: Match period ended
+   - CANCELLED: Match was cancelled
+
+   Response Metadata:
+   - Response timestamp
+   - Response message (optional)
+   - Response reason (for rejections)
+   - HR notification of response
+
+7. NOTIFICATION SYSTEM
+   Location: backend/src/routes/notifications.ts
+
+   Response Notifications:
+   ```typescript
+   // Create notification for HR when buddy responds
+   await prisma.notification.create({
+     data: {
+       userId: match.senderId,
+       title: `Match ${status}`,
+       message: `Your buddy match request has been ${status.toLowerCase()}`,
+       type: 'MATCH_RESPONSE'
+     }
+   });
+   ```
+
+8. BUDDY LOAD DASHBOARD
+   Location: frontend/src/pages/DashboardPage.tsx
+
+   Capacity Overview:
+   - Current active matches count
+   - Maximum capacity indicator
+   - Utilization percentage
+   - Available slots remaining
+   - Visual capacity bar
+
+COMPLETE USER JOURNEY:
+
+1. Buddy receives match request notification
+2. Buddy navigates to Matches page
+3. Buddy sees pending match request with details
+4. Buddy reviews newcomer information and context
+5. Buddy checks current capacity vs. maximum
+6. Buddy decides to accept or reject
+7. Buddy clicks Accept or Reject button
+8. System validates capacity (for acceptance)
+9. Match status updates to ACCEPTED or REJECTED
+10. HR receives notification of buddy's response
+11. If accepted, newcomer gets access to buddy
+12. If rejected, HR can find alternative buddy
+
+CAPACITY MANAGEMENT FEATURES:
+
+✅ Maximum Buddy Limit: Configurable per buddy (default: 3)
+✅ Real-time Capacity Checking: Prevents overloading
+✅ Visual Capacity Indicators: Clear load status display
+✅ Automatic Rejection: When capacity is reached
+✅ Capacity Utilization Dashboard: For HR monitoring
+
+RESPONSE OPTIONS:
+
+✅ Accept Match: Creates active buddy-newcomer relationship
+✅ Reject Match: Declines with optional reason
+✅ Response Message: Optional context for decision
+✅ Response Timestamp: Tracks when decision was made
+✅ HR Notification: Instant notification of response
+
+TECHNICAL IMPLEMENTATION:
+
+API Endpoints:
+- GET /api/matches - View all matches for buddy
+- PATCH /api/matches/:id/respond - Accept/reject match
+- GET /api/notifications - View match request notifications
+
+Database Operations:
+- Match status updates with timestamps
+- Capacity validation queries
+- Notification creation and management
+- Response tracking and history
+
+Frontend Components:
+- MatchRequestCard component
+- Accept/Reject action buttons
+- Capacity indicator display
+- Notification center integration
+
+SECURITY & VALIDATION:
+
+✅ Role-based Access: Only buddies can respond to their matches
+✅ Ownership Validation: Can only respond to own match requests
+✅ Capacity Validation: Prevents exceeding maximum buddy limit
+✅ Status Validation: Can only respond to PENDING matches
+✅ Input Sanitization: Safe handling of response messages
+
+This implementation ensures buddies have full control over their match requests while preventing overload and maintaining system integrity.

@@ -1,0 +1,28 @@
+{
+  "name": "buddy-match",
+  "version": "1.0.0",
+  "description": "A web application for HR and veteran employees to coordinate buddy matches for newcomers",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "db:setup": "cd backend && npm run db:generate && npm run db:push",
+    "db:seed": "cd backend && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "dependencies": {
+    "@playwright/test": "^1.55.0",
+    "puppeteer": "^24.22.0"
+  }
+}

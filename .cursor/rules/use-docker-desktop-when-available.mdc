@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Don't run applications by npm or nodejs if the project is using docker-compose. Use docker-compose commands instead.

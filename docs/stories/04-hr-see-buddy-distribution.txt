@@ -1,0 +1,241 @@
+USER STORY: As HR, I want to see how many buddies each volunteer has so I can distribute matches fairly.
+
+IMPLEMENTATION OVERVIEW:
+This user story is implemented through a comprehensive buddy load dashboard that provides HR with real-time visibility into buddy capacity, utilization rates, and distribution patterns to ensure fair and balanced workload distribution.
+
+CORE IMPLEMENTATION COMPONENTS:
+
+1. BUDDY LOAD DASHBOARD
+   Location: frontend/src/pages/DashboardPage.tsx and backend/src/routes/buddies.ts
+
+   Dashboard Features:
+   - Real-time buddy capacity overview
+   - Individual buddy utilization rates
+   - Fair distribution recommendations
+   - Capacity alerts and warnings
+   - Historical distribution trends
+
+2. BUDDY CAPACITY API
+   Location: backend/src/routes/buddies.ts (GET /api/buddies/dashboard)
+
+   Implementation Details:
+   ```typescript
+   router.get('/dashboard', requireRole(['HR']), async (req: AuthRequest, res: Response) => {
+     const buddyStats = await prisma.buddyProfile.findMany({
+       include: {
+         user: {
+           select: {
+             firstName: true,
+             lastName: true,
+             email: true
+           }
+         }
+       }
+     });
+
+     const stats = await Promise.all(
+       buddyStats.map(async (buddy) => {
+         const activeMatchesCount = await prisma.match.count({
+           where: {
+             receiverId: buddy.userId,
+             status: 'ACCEPTED'
+           }
+         });
+         return {
+           id: buddy.id,
+           name: `${buddy.user.firstName} ${buddy.user.lastName}`,
+           email: buddy.user.email,
+           location: buddy.location,
+           unit: buddy.unit,
+           maxBuddies: buddy.maxBuddies,
+           currentBuddies: activeMatchesCount,
+           availability: buddy.isAvailable,
+           utilizationRate: (activeMatchesCount / buddy.maxBuddies) * 100
+         };
+       })
+     );
+
+     res.json(stats);
+   });
+   ```
+
+3. CAPACITY TRACKING SYSTEM
+   Location: backend/prisma/schema.prisma
+
+   Database Schema:
+   ```prisma
+   model BuddyProfile {
+     id        String  @id @default(cuid())
+     userId    String  @unique
+     user      User    @relation(fields: [userId], references: [id])
+     
+     maxBuddies   Int      @default(3) // Maximum capacity
+     isAvailable  Boolean  @default(true)
+     
+     // ... other fields
+   }
+
+   model Match {
+     id        String      @id @default(cuid())
+     receiverId String     // Buddy ID
+     status    MatchStatus // ACCEPTED, PENDING, etc.
+     
+     // ... other fields
+   }
+   ```
+
+4. UTILIZATION CALCULATION
+   Location: backend/src/routes/buddies.ts
+
+   Capacity Metrics:
+   - Current Active Matches: Count of ACCEPTED matches
+   - Maximum Capacity: Buddy's maxBuddies setting
+   - Utilization Rate: (Current / Maximum) * 100
+   - Available Slots: Maximum - Current
+   - Load Status: Under-utilized, Optimal, Overloaded
+
+5. FRONTEND DASHBOARD INTERFACE
+   Location: frontend/src/pages/DashboardPage.tsx
+
+   HR Dashboard Display:
+   ```typescript
+   const { data: buddyStats } = useQuery(
+     'buddy-dashboard',
+     () => api.get('/buddies/dashboard').then(res => res.data),
+     { enabled: user?.role === 'HR' }
+   );
+
+   // Dashboard cards for HR
+   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+     <div className="card">
+       <div className="flex items-center">
+         <div className="flex-shrink-0">
+           <UserGroupIcon className="h-8 w-8 text-primary-600" />
+         </div>
+         <div className="ml-5 w-0 flex-1">
+           <dl>
+             <dt className="text-sm font-medium text-gray-500 truncate">
+               Total Buddies
+             </dt>
+             <dd className="text-lg font-medium text-gray-900">
+               {buddyStats?.length || 0}
+             </dd>
+           </dl>
+         </div>
+       </div>
+     </div>
+   </div>
+   ```
+
+6. BUDDY DISTRIBUTION TABLE
+   Location: frontend/src/pages/DashboardPage.tsx
+
+   Detailed Buddy List:
+   - Buddy name and contact information
+   - Current active matches count
+   - Maximum capacity setting
+   - Utilization percentage
+   - Availability status
+   - Location and unit information
+   - Visual capacity indicators
+
+7. FAIR DISTRIBUTION ALGORITHM
+   Location: backend/src/routes/buddies.ts
+
+   Distribution Logic:
+   - Prioritize under-utilized buddies
+   - Consider location and unit matching
+   - Respect availability status
+   - Balance workload across all buddies
+   - Prevent overloading any single buddy
+
+8. CAPACITY ALERTS & WARNINGS
+   Location: frontend/src/pages/DashboardPage.tsx
+
+   Alert System:
+   - Red alert: Buddy at maximum capacity
+   - Yellow alert: Buddy approaching capacity
+   - Green status: Buddy has available slots
+   - Recommendations for better distribution
+
+9. HISTORICAL TRACKING
+   Location: backend/src/routes/buddies.ts
+
+   Distribution Analytics:
+   - Track capacity changes over time
+   - Monitor distribution patterns
+   - Identify over/under-utilized buddies
+   - Generate distribution reports
+
+COMPLETE USER JOURNEY:
+
+1. HR logs in and sees dashboard
+2. HR views buddy distribution overview
+3. HR sees total buddies and active matches
+4. HR reviews individual buddy capacity
+5. HR identifies under-utilized buddies
+6. HR spots over-utilized buddies
+7. HR makes informed match decisions
+8. HR ensures fair distribution
+9. HR monitors capacity changes
+10. HR adjusts distribution as needed
+
+DASHBOARD METRICS DISPLAYED:
+
+✅ Total Buddies: Count of all active buddy profiles
+✅ Active Matches: Total number of accepted matches
+✅ Pending Matches: Matches awaiting buddy response
+✅ Utilization Rates: Percentage of capacity used
+✅ Available Slots: Remaining capacity across all buddies
+✅ Distribution Balance: Visual representation of fairness
+
+CAPACITY INDICATORS:
+
+✅ Green (0-70%): Under-utilized, can take more matches
+✅ Yellow (70-90%): Approaching capacity, use with caution
+✅ Red (90-100%): At or near capacity, avoid new matches
+✅ Gray (Unavailable): Buddy not accepting new matches
+
+DISTRIBUTION FEATURES:
+
+✅ Real-time Updates: Live capacity information
+✅ Visual Indicators: Color-coded capacity status
+✅ Sorting Options: By capacity, utilization, name, location
+✅ Filtering: By availability, location, unit
+✅ Export Options: Download distribution reports
+
+TECHNICAL IMPLEMENTATION:
+
+API Endpoints:
+- GET /api/buddies/dashboard - HR-only buddy statistics
+- GET /api/buddies - List all buddies with capacity info
+- GET /api/matches - Match statistics and status
+
+Database Queries:
+- Aggregate queries for capacity calculations
+- Real-time match counting
+- Utilization rate calculations
+- Historical capacity tracking
+
+Frontend Components:
+- DashboardPage with HR-specific content
+- BuddyDistributionTable component
+- CapacityIndicator component
+- UtilizationChart component
+
+PERFORMANCE OPTIMIZATIONS:
+
+✅ Efficient Queries: Optimized database queries for capacity data
+✅ Caching: React Query caches dashboard data
+✅ Real-time Updates: Socket.io for live capacity changes
+✅ Pagination: Large buddy lists are paginated
+✅ Memoization: Expensive calculations are memoized
+
+SECURITY & ACCESS CONTROL:
+
+✅ HR-only Access: Dashboard restricted to HR role
+✅ Data Privacy: Only show necessary buddy information
+✅ Audit Logging: Track HR actions and decisions
+✅ Role Validation: Server-side role checking
+
+This implementation provides HR with comprehensive visibility into buddy capacity and distribution, enabling fair and balanced workload management across all volunteer buddies.

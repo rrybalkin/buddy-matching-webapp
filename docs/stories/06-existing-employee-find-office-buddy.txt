@@ -1,0 +1,281 @@
+USER STORY: As an existing employee (optional), I want to find an office buddy so I can feel more connected to my team and location.
+
+IMPLEMENTATION OVERVIEW:
+This user story is implemented through the same buddy request system as relocation support, but specifically designed for existing employees who feel disconnected and want to build better connections within their current office environment.
+
+CORE IMPLEMENTATION COMPONENTS:
+
+1. OFFICE CONNECTION REQUEST SYSTEM
+   Location: backend/src/routes/requests.ts and frontend/src/pages/RequestsPage.tsx
+
+   Request Type: OFFICE_CONNECTION
+   - Specifically for existing employees feeling disconnected
+   - Focuses on team building and office integration
+   - Uses same underlying system as relocation support
+
+2. REQUEST CREATION FOR OFFICE CONNECTION
+   Location: backend/src/routes/requests.ts (POST /api/requests)
+
+   Implementation Details:
+   ```typescript
+   router.post('/', [
+     body('type').isIn(['RELOCATION_SUPPORT', 'OFFICE_CONNECTION']),
+     body('message').trim().isLength({ min: 10, max: 500 }),
+     body('preferredLocation').optional().trim(),
+     body('preferredUnit').optional().trim(),
+     body('preferredTechStack').optional().isArray(),
+     body('connectionGoals').optional().trim() // Specific to office connection
+   ], async (req: AuthRequest, res: Response) => {
+     const { type, message, preferredLocation, preferredUnit, preferredTechStack, connectionGoals } = req.body;
+
+     // Create buddy request
+     const request = await prisma.buddyRequest.create({
+       data: {
+         userId: req.user!.id,
+         type: 'OFFICE_CONNECTION',
+         message,
+         preferredLocation,
+         preferredUnit,
+         preferredTechStack,
+         connectionGoals, // Additional field for office connection
+         status: 'PENDING'
+       }
+     });
+
+     // Notify HR about new request
+     await prisma.notification.create({
+       data: {
+         userId: hrUserId,
+         title: 'New Office Connection Request',
+         message: `New office connection request from ${req.user!.firstName}`,
+         type: 'BUDDY_REQUEST'
+       }
+     });
+
+     res.json(request);
+   });
+   ```
+
+3. ENHANCED DATABASE SCHEMA
+   Location: backend/prisma/schema.prisma
+
+   Updated BuddyRequest Model:
+   ```prisma
+   model BuddyRequest {
+     id        String      @id @default(cuid())
+     userId    String
+     user      User        @relation(fields: [userId], references: [id])
+     
+     type      RequestType // RELOCATION_SUPPORT, OFFICE_CONNECTION
+     message   String
+     preferredLocation String?
+     preferredUnit     String?
+     preferredTechStack String[]
+     connectionGoals   String? // Specific to office connection
+     
+     status    RequestStatus @default(PENDING)
+     matchedBuddyId String?
+     matchedBuddy   User?    @relation("BuddyRequestMatch", fields: [matchedBuddyId], references: [id])
+     
+     createdAt DateTime @default(now())
+     updatedAt DateTime @updatedAt
+
+     @@map("buddy_requests")
+   }
+
+   enum RequestType {
+     RELOCATION_SUPPORT
+     OFFICE_CONNECTION
+   }
+   ```
+
+4. OFFICE CONNECTION REQUEST FORM
+   Location: frontend/src/pages/RequestsPage.tsx
+
+   Specialized Form Fields:
+   ```typescript
+   const [formData, setFormData] = useState({
+     type: 'OFFICE_CONNECTION',
+     message: '',
+     preferredLocation: '',
+     preferredUnit: '',
+     preferredTechStack: [],
+     connectionGoals: '' // New field for office connection
+   });
+
+   // Form validation specific to office connection
+   const validateOfficeConnection = (data: any) => {
+     if (data.type === 'OFFICE_CONNECTION') {
+       return data.message.length >= 10 && data.connectionGoals.length >= 5;
+     }
+     return data.message.length >= 10;
+   };
+   ```
+
+5. CONNECTION GOALS TRACKING
+   Location: frontend/src/pages/RequestsPage.tsx
+
+   Goals Management:
+   - Team integration goals
+   - Social connection objectives
+   - Professional development aims
+   - Office culture adaptation
+   - Networking and relationship building
+
+6. HR OFFICE CONNECTION MANAGEMENT
+   Location: frontend/src/pages/RequestsPage.tsx (HR view)
+
+   HR Features for Office Connection:
+   - Filter requests by type (OFFICE_CONNECTION)
+   - View connection goals and preferences
+   - Match with buddies who excel at team building
+   - Track connection success metrics
+   - Monitor office integration progress
+
+7. MATCHING ALGORITHM FOR OFFICE CONNECTION
+   Location: backend/src/routes/requests.ts
+
+   Specialized Matching Logic:
+   ```typescript
+   // Find buddies suitable for office connection
+   const suitableBuddies = await prisma.buddyProfile.findMany({
+     where: {
+       isAvailable: true,
+       location: preferredLocation ? { contains: preferredLocation } : undefined,
+       unit: preferredUnit ? { contains: preferredUnit } : undefined,
+       techStack: preferredTechStack.length > 0 ? { hasSome: preferredTechStack } : undefined,
+       // Additional criteria for office connection
+       mentoringStyle: {
+         in: ['SOCIAL', 'COLLABORATIVE', 'INCLUSIVE'] // Buddy styles good for connection
+       }
+     },
+     include: {
+       user: {
+         select: {
+           id: true,
+           firstName: true,
+           lastName: true,
+           email: true,
+           profile: {
+             select: {
+               bio: true,
+               interests: true
+             }
+           }
+         }
+       }
+     }
+   });
+   ```
+
+8. CONNECTION SUCCESS METRICS
+   Location: backend/src/routes/feedback.ts
+
+   Tracking Office Connection Success:
+   - Connection quality ratings
+   - Team integration feedback
+   - Social engagement metrics
+   - Professional relationship development
+   - Overall satisfaction scores
+
+9. OFFICE CONNECTION FEATURES
+   Location: frontend/src/pages/RequestsPage.tsx
+
+   Specialized Features:
+   - Connection goals input field
+   - Team building preference selection
+   - Social activity interest matching
+   - Office culture adaptation support
+   - Networking opportunity identification
+
+COMPLETE USER JOURNEY:
+
+1. Existing employee logs in
+2. Employee navigates to Requests page
+3. Employee selects "Office Connection" request type
+4. Employee fills out specialized form:
+   - Message describing current disconnection feelings
+   - Connection goals (team integration, social connections, etc.)
+   - Preferred office location
+   - Preferred department/unit
+   - Preferred tech stack (optional)
+5. Employee submits office connection request
+6. System creates request with PENDING status
+7. HR receives notification of new office connection request
+8. HR reviews request and connection goals
+9. HR searches for buddies with strong social/team-building skills
+10. HR creates match with appropriate buddy
+11. Buddy receives match request with connection context
+12. Buddy accepts or rejects match
+13. If accepted, employee gets buddy access
+14. Both parties work on office connection goals
+15. Employee provides feedback on connection success
+
+OFFICE CONNECTION FORM FIELDS:
+
+✅ Request Type: Office Connection (pre-selected)
+✅ Message: Description of current disconnection (10-500 characters)
+✅ Connection Goals: Specific objectives (team integration, social connections, etc.)
+✅ Preferred Location: Office location preference
+✅ Preferred Unit: Department preference
+✅ Preferred Tech Stack: Technology preferences (optional)
+✅ Social Interests: Hobbies and interests for connection
+✅ Team Preferences: Team size, working style preferences
+
+CONNECTION GOALS EXAMPLES:
+
+✅ Team Integration: "I want to feel more connected to my immediate team"
+✅ Social Connections: "I'd like to build friendships with colleagues"
+✅ Office Culture: "I want to better understand our office culture"
+✅ Professional Development: "I want to improve my collaboration skills"
+✅ Networking: "I want to expand my professional network"
+✅ Mentorship: "I want to learn from experienced colleagues"
+
+HR MANAGEMENT FOR OFFICE CONNECTION:
+
+✅ Request Dashboard: Filter by OFFICE_CONNECTION type
+✅ Goals Analysis: Review connection objectives
+✅ Buddy Matching: Find socially-oriented buddies
+✅ Success Tracking: Monitor connection progress
+✅ Feedback Analysis: Review connection quality
+✅ Culture Integration: Support office culture adaptation
+
+MATCHING CRITERIA FOR OFFICE CONNECTION:
+
+✅ Social Skills: Buddies with strong interpersonal skills
+✅ Team Building: Experience in team integration
+✅ Office Culture: Deep understanding of company culture
+✅ Mentoring Style: Collaborative and inclusive approach
+✅ Interests: Shared hobbies and interests
+✅ Availability: Time and capacity for social connection
+
+TECHNICAL IMPLEMENTATION:
+
+API Endpoints:
+- POST /api/requests - Create office connection request
+- GET /api/requests?type=OFFICE_CONNECTION - Filter office connection requests
+- PATCH /api/requests/:id - Update request status
+- GET /api/requests/:id - Get request details with connection goals
+
+Database Operations:
+- Request creation with connection goals
+- Specialized matching queries
+- Connection success tracking
+- Feedback and metrics collection
+
+Frontend Components:
+- OfficeConnectionForm component
+- ConnectionGoalsInput component
+- HRConnectionManagement component
+- ConnectionSuccessMetrics component
+
+SUCCESS METRICS & FEEDBACK:
+
+✅ Connection Quality: Rating of buddy relationship
+✅ Team Integration: Progress on team connection goals
+✅ Social Engagement: Level of social interaction
+✅ Professional Growth: Development through connection
+✅ Overall Satisfaction: General happiness with buddy
+✅ Long-term Impact: Sustained office connections
+
+This implementation provides existing employees with a structured way to request buddy support for office connection while giving HR the tools to match them with buddies who excel at team building and social integration.

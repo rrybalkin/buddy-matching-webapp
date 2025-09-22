@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  HR
+  BUDDY
+  NEWCOMER
+  RELOCATED_EMPLOYEE
+  EXISTING_EMPLOYEE
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum BuddyRequestType {
+  NEWCOMER_MATCH
+  RELOCATION_SUPPORT
+  OFFICE_CONNECTION
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile information
+  profile UserProfile?
+
+  // Buddy-specific fields
+  buddyProfile BuddyProfile?
+
+  // Relationships
+  sentMatches     Match[] @relation("SentMatches")
+  receivedMatches Match[] @relation("ReceivedMatches")
+  messages        Message[]
+  feedback        Feedback[]
+  buddyRequests   BuddyRequest[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic info
+  phone     String?
+  avatar    String?
+  bio       String?
+  
+  // Location and work info
+  location     String?
+  timezone     String?
+  department   String?
+  position     String?
+  startDate    DateTime?
+  
+  // Preferences
+  interests    String[] // Array of interest tags
+  languages    String[] // Array of languages
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model BuddyProfile {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Buddy-specific information
+  location     String
+  unit         String
+  techStack    String[] // Array of technologies
+  interests    String[] // Array of personal interests
+  maxBuddies   Int      @default(3) // Maximum number of active buddies
+  isAvailable  Boolean  @default(true)
+  
+  // Experience and preferences
+  experience   String? // Years of experience or level
+  mentoringStyle String? // How they prefer to mentor
+  availability String? // When they're available
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("buddy_profiles")
+}
+
+model Match {
+  id        String      @id @default(cuid())
+  senderId  String
+  sender    User        @relation("SentMatches", fields: [senderId], references: [id])
+  receiverId String
+  receiver  User        @relation("ReceivedMatches", fields: [receiverId], references: [id])
+  
+  status    MatchStatus @default(PENDING)
+  type      BuddyRequestType
+  
+  // Match details
+  message   String? // Optional message from HR
+  startDate DateTime?
+  endDate   DateTime?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  respondedAt DateTime?
+  
+  // Relationships
+  messages  Message[]
+  feedback  Feedback[]
+
+  @@unique([senderId, receiverId, type])
+  @@map("matches")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  
+  content   String
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  rating    Int      // 1-5 scale
+  comment   String?
+  
+  // Feedback categories
+  helpfulness    Int? // 1-5
+  communication  Int? // 1-5
+  availability   Int? // 1-5
+  
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, userId])
+  @@map("feedback")
+}
+
+model BuddyRequest {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  
+  type      BuddyRequestType
+  status    String            @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  // Request details
+  message   String?
+  preferences String? // JSON string of preferences
+  
+  // For relocation requests
+  newLocation String?
+  relocationDate DateTime?
+  
+  // For office connection requests
+  reason    String? // Why they need a buddy
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("buddy_requests")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // MATCH_REQUEST, MESSAGE, FEEDBACK, etc.
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}

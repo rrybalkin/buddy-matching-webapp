@@ -1,0 +1,251 @@
+USER STORY: As a relocated employee (optional), I want to request a buddy to help me settle into the new office.
+
+IMPLEMENTATION OVERVIEW:
+This user story is implemented through a buddy request system that allows relocated employees to request buddy support for settling into a new office location, with HR managing the matching process.
+
+CORE IMPLEMENTATION COMPONENTS:
+
+1. BUDDY REQUEST SYSTEM
+   Location: backend/src/routes/requests.ts and frontend/src/pages/RequestsPage.tsx
+
+   Request Types:
+   - RELOCATION_SUPPORT: For employees who have moved to a new office
+   - OFFICE_CONNECTION: For employees feeling disconnected
+   - Both types use the same underlying system with different matching logic
+
+2. REQUEST CREATION API
+   Location: backend/src/routes/requests.ts (POST /api/requests)
+
+   Implementation Details:
+   ```typescript
+   router.post('/', [
+     body('type').isIn(['RELOCATION_SUPPORT', 'OFFICE_CONNECTION']),
+     body('message').trim().isLength({ min: 10, max: 500 }),
+     body('preferredLocation').optional().trim(),
+     body('preferredUnit').optional().trim(),
+     body('preferredTechStack').optional().isArray()
+   ], async (req: AuthRequest, res: Response) => {
+     const { type, message, preferredLocation, preferredUnit, preferredTechStack } = req.body;
+
+     // Create buddy request
+     const request = await prisma.buddyRequest.create({
+       data: {
+         userId: req.user!.id,
+         type,
+         message,
+         preferredLocation,
+         preferredUnit,
+         preferredTechStack,
+         status: 'PENDING'
+       }
+     });
+
+     // Notify HR about new request
+     await prisma.notification.create({
+       data: {
+         userId: hrUserId, // HR user ID
+         title: 'New Buddy Request',
+         message: `New ${type.replace('_', ' ').toLowerCase()} request from ${req.user!.firstName}`,
+         type: 'BUDDY_REQUEST'
+       }
+     });
+
+     res.json(request);
+   });
+   ```
+
+3. DATABASE SCHEMA
+   Location: backend/prisma/schema.prisma
+
+   BuddyRequest Model:
+   ```prisma
+   model BuddyRequest {
+     id        String      @id @default(cuid())
+     userId    String
+     user      User        @relation(fields: [userId], references: [id])
+     
+     type      RequestType // RELOCATION_SUPPORT, OFFICE_CONNECTION
+     message   String
+     preferredLocation String?
+     preferredUnit     String?
+     preferredTechStack String[]
+     
+     status    RequestStatus @default(PENDING) // PENDING, MATCHED, COMPLETED, CANCELLED
+     matchedBuddyId String?
+     matchedBuddy   User?    @relation("BuddyRequestMatch", fields: [matchedBuddyId], references: [id])
+     
+     createdAt DateTime @default(now())
+     updatedAt DateTime @updatedAt
+
+     @@map("buddy_requests")
+   }
+
+   enum RequestType {
+     RELOCATION_SUPPORT
+     OFFICE_CONNECTION
+   }
+
+   enum RequestStatus {
+     PENDING
+     MATCHED
+     COMPLETED
+     CANCELLED
+   }
+   ```
+
+4. FRONTEND REQUEST FORM
+   Location: frontend/src/pages/RequestsPage.tsx
+
+   Request Creation Form:
+   ```typescript
+   const [formData, setFormData] = useState({
+     type: 'RELOCATION_SUPPORT',
+     message: '',
+     preferredLocation: '',
+     preferredUnit: '',
+     preferredTechStack: []
+   });
+
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     try {
+       await api.post('/requests', formData);
+       toast.success('Buddy request submitted successfully!');
+       // Refresh requests list
+     } catch (error) {
+       toast.error('Failed to submit request');
+     }
+   };
+   ```
+
+5. HR REQUEST MANAGEMENT
+   Location: frontend/src/pages/RequestsPage.tsx (HR view)
+
+   HR Interface Features:
+   - List all pending buddy requests
+   - Filter by request type and status
+   - View request details and preferences
+   - Create matches for requests
+   - Track request status and outcomes
+
+6. REQUEST MATCHING PROCESS
+   Location: backend/src/routes/requests.ts
+
+   Matching Logic:
+   ```typescript
+   // Find suitable buddies for relocation support
+   const suitableBuddies = await prisma.buddyProfile.findMany({
+     where: {
+       isAvailable: true,
+       location: preferredLocation ? { contains: preferredLocation } : undefined,
+       unit: preferredUnit ? { contains: preferredUnit } : undefined,
+       techStack: preferredTechStack.length > 0 ? { hasSome: preferredTechStack } : undefined
+     },
+     include: {
+       user: {
+         select: {
+           id: true,
+           firstName: true,
+           lastName: true,
+           email: true
+         }
+       }
+     }
+   });
+   ```
+
+7. NOTIFICATION SYSTEM
+   Location: backend/src/routes/notifications.ts
+
+   Request Notifications:
+   - Employee receives confirmation when request is submitted
+   - HR receives notification of new request
+   - Employee receives notification when matched
+   - Both parties notified when match is accepted/rejected
+
+8. REQUEST STATUS TRACKING
+   Location: frontend/src/pages/RequestsPage.tsx
+
+   Status Management:
+   - PENDING: Request submitted, awaiting HR review
+   - MATCHED: HR has created a match with a buddy
+   - COMPLETED: Request fulfilled, relationship established
+   - CANCELLED: Request cancelled by employee or HR
+
+COMPLETE USER JOURNEY:
+
+1. Relocated employee logs in
+2. Employee navigates to Requests page
+3. Employee selects "Relocation Support" request type
+4. Employee fills out request form with:
+   - Detailed message about relocation needs
+   - Preferred office location
+   - Preferred department/unit
+   - Preferred tech stack (optional)
+5. Employee submits request
+6. System creates request with PENDING status
+7. HR receives notification of new request
+8. HR reviews request and preferences
+9. HR searches for suitable buddies
+10. HR creates match with appropriate buddy
+11. Buddy receives match request
+12. Buddy accepts or rejects match
+13. If accepted, employee gets buddy access
+14. If rejected, HR finds alternative buddy
+
+REQUEST FORM FIELDS:
+
+✅ Request Type: Relocation Support or Office Connection
+✅ Message: Detailed description of needs (10-500 characters)
+✅ Preferred Location: Office location preference
+✅ Preferred Unit: Department preference
+✅ Preferred Tech Stack: Technology preferences (optional)
+✅ Additional Notes: Any other relevant information
+
+HR MANAGEMENT FEATURES:
+
+✅ Request Dashboard: Overview of all requests
+✅ Filtering: By type, status, location, unit
+✅ Priority Sorting: By urgency and date
+✅ Match Creation: Direct match creation from request
+✅ Status Updates: Track request progress
+✅ Communication: Message requesters directly
+
+MATCHING ALGORITHM:
+
+✅ Location Matching: Prefer buddies in same office
+✅ Unit Matching: Prefer buddies in same department
+✅ Tech Stack Matching: Prefer buddies with similar skills
+✅ Availability: Only match with available buddies
+✅ Capacity: Respect buddy capacity limits
+✅ Experience: Consider buddy experience level
+
+TECHNICAL IMPLEMENTATION:
+
+API Endpoints:
+- POST /api/requests - Create new buddy request
+- GET /api/requests - List requests (filtered by user role)
+- PATCH /api/requests/:id - Update request status
+- GET /api/requests/:id - Get request details
+
+Database Operations:
+- Request creation with validation
+- Preference matching queries
+- Status updates and tracking
+- Notification management
+
+Frontend Components:
+- RequestForm component
+- RequestList component
+- RequestDetails component
+- HRRequestManagement component
+
+SECURITY & VALIDATION:
+
+✅ Role-based Access: Employees can create requests, HR can manage
+✅ Input Validation: Message length, required fields
+✅ Preference Validation: Valid locations, units, tech stacks
+✅ Status Validation: Only valid status transitions
+✅ Ownership Validation: Users can only see their own requests
+
+This implementation provides relocated employees with a structured way to request buddy support while giving HR the tools to efficiently match them with suitable buddies based on their specific needs and preferences.

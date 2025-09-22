@@ -1,0 +1,145 @@
+USER STORY: As HR, I want to match newcomers with buddies before their start date so they feel supported from day one.
+
+IMPLEMENTATION OVERVIEW:
+This user story is implemented through a comprehensive pre-start date matching workflow that allows HR to proactively create buddy matches for newcomers, ensuring they have support ready from their first day.
+
+CORE IMPLEMENTATION COMPONENTS:
+
+1. HR DASHBOARD & BUDDY MANAGEMENT
+   Location: frontend/src/pages/DashboardPage.tsx and frontend/src/pages/BuddiesPage.tsx
+   Backend: backend/src/routes/buddies.ts and backend/src/routes/matches.ts
+
+   How it works:
+   - HR can view all available buddy profiles with detailed information
+   - Advanced filtering by location, unit, tech stack, and interests
+   - Buddy load dashboard shows current capacity vs. maximum capacity
+   - Real-time availability status of each buddy
+
+2. MATCH CREATION WORKFLOW
+   Location: backend/src/routes/matches.ts (POST /api/matches)
+
+   Implementation Details:
+   - HR creates a match for a newcomer
+   - Requires HR role authentication
+   - Validates buddy availability and capacity
+   - Creates match with PENDING status
+   - Sends notification to selected buddy
+   - Tracks match details including start date
+
+3. PRE-START DATE MATCHING PROCESS
+
+   Step-by-Step Flow:
+   
+   Step 1: HR Identifies Newcomer
+   - Newcomer account created with role NEWCOMER
+   - Profile includes start date information
+   - System tracks newcomer's department, location, and preferences
+   
+   Step 2: HR Searches for Suitable Buddies
+   - Uses advanced filters on /api/buddies endpoint
+   - Filters by: location, unit, tech stack, interests, availability
+   - Reviews buddy capacity and current workload
+   
+   Step 3: HR Creates Match Request
+   - Selects appropriate buddy
+   - Sets match type as NEWCOMER_MATCH
+   - Optionally includes start date and end date
+   - Adds personal message for context
+   
+   Step 4: Buddy Notification & Response
+   - Buddy receives real-time notification
+   - Can accept or reject the match request
+   - System prevents overloading (respects max buddy capacity)
+   
+   Step 5: Match Confirmation
+   - Once accepted, match status becomes ACCEPTED
+   - Both HR and buddy receive confirmation
+   - Newcomer gets access to their assigned buddy
+
+4. DATABASE SCHEMA SUPPORT
+   Location: backend/prisma/schema.prisma
+
+   Key Models:
+   - Match model with senderId (HR), receiverId (Buddy), status, type, startDate, endDate
+   - User model with role (HR, BUDDY, NEWCOMER) and profile information
+   - Notification model for real-time communication
+
+5. FRONTEND IMPLEMENTATION
+
+   HR Interface (frontend/src/pages/BuddiesPage.tsx):
+   - HR can filter and search buddies using multiple criteria
+   - Create match button for each available buddy
+   - Real-time data fetching with React Query
+   - Responsive design with Tailwind CSS
+
+   Match Management (frontend/src/pages/MatchesPage.tsx):
+   - HR can view all matches they've created
+   - Track status (PENDING, ACCEPTED, REJECTED)
+   - See match details including start dates
+   - Monitor buddy responses
+
+6. TIMELINE & SCHEDULING FEATURES
+
+   Start Date Integration:
+   - Newcomer profiles include startDate field
+   - HR can set match startDate when creating matches
+   - System can filter matches by start date ranges
+   - Notifications can be scheduled for start date reminders
+
+   Pre-Start Date Preparation:
+   - Matches created before newcomer's start date
+   - Buddy gets advance notice to prepare
+   - Optional intro meeting scheduling
+   - Welcome message system
+
+7. NOTIFICATION SYSTEM
+   Location: backend/src/routes/notifications.ts
+
+   Real-time Notifications:
+   - When HR creates a match, buddy receives instant notification
+   - Notification includes match details and newcomer information
+   - Socket.io integration for real-time updates
+   - Email notifications (configurable)
+
+COMPLETE USER JOURNEY:
+
+1. HR logs in → Sees dashboard with buddy statistics
+2. HR navigates to Buddies page → Views all available buddies with filters
+3. HR searches for suitable buddy → Uses location, tech stack, interests filters
+4. HR clicks "Create Match" → Opens match creation form
+5. HR fills match details → Selects newcomer, sets start date, adds message
+6. System creates match → Sends notification to selected buddy
+7. Buddy receives notification → Can accept/reject the match
+8. Once accepted → Match is confirmed, newcomer gets buddy access
+9. On start date → Newcomer can immediately contact their assigned buddy
+
+KEY BENEFITS:
+
+✅ Proactive Matching: HR can create matches well before start date
+✅ Informed Decisions: Rich buddy profiles with capacity tracking
+✅ Flexible Scheduling: Start/end date support for match periods
+✅ Real-time Communication: Instant notifications and responses
+✅ Scalable Process: Handles multiple newcomers and buddies efficiently
+✅ Audit Trail: Complete tracking of match creation and responses
+
+TECHNICAL IMPLEMENTATION:
+
+API Endpoints:
+- GET /api/buddies - List and filter buddy profiles
+- POST /api/matches - Create new match (HR only)
+- GET /api/matches - View all matches
+- PATCH /api/matches/:id/respond - Accept/reject match (Buddy only)
+
+Database Tables:
+- users (with role and profile information)
+- buddy_profiles (detailed buddy information)
+- matches (match relationships and status)
+- notifications (real-time communication)
+
+Frontend Components:
+- BuddiesPage (buddy listing and filtering)
+- MatchesPage (match management)
+- DashboardPage (HR overview)
+- Layout (navigation and user management)
+
+This implementation ensures newcomers feel supported from day one by having their buddy relationship established and ready before they even start!
