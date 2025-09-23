@@ -9,7 +9,8 @@ import {
   BellIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline'
 import { useSocket } from '../contexts/SocketContext'
 import { useQuery } from 'react-query'
@@ -18,11 +19,11 @@ import { formatRoleForDisplay } from '../lib/roleUtils'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Buddies', href: '/buddies', icon: UserGroupIcon },
+  { name: 'Buddies', href: '/buddies', icon: UserGroupIcon, roles: ['HR', 'BUDDY'] },
+  { name: 'NewComers', href: '/newcomers', icon: UserPlusIcon, roles: ['HR'] },
   { name: 'Matches', href: '/matches', icon: ChatBubbleLeftRightIcon },
   { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Profile', href: '/profile', icon: UserIcon },
-  { name: 'Requests', href: '/requests', icon: UserGroupIcon },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -65,6 +66,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
+              // Check if user has access to this navigation item
+              if (item.roles && !item.roles.includes(user?.role || '')) {
+                return null
+              }
+              
               const isActive = location.pathname === item.href
               return (
                 <Link
@@ -93,6 +99,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
+              // Check if user has access to this navigation item
+              if (item.roles && !item.roles.includes(user?.role || '')) {
+                return null
+              }
+              
               const isActive = location.pathname === item.href
               return (
                 <Link

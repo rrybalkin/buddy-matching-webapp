@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDebounce } from '../hooks/useDebounce'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import CreateMatchModal from '../components/CreateMatchModal'
+import BuddyMatchModal from '../components/BuddyMatchModal'
 
 export default function BuddiesPage() {
   const { user } = useAuth()
@@ -21,6 +22,7 @@ export default function BuddiesPage() {
   // Modal state
   const [selectedBuddy, setSelectedBuddy] = useState<{id: string, name: string} | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isBuddyModalOpen, setIsBuddyModalOpen] = useState(false)
 
   // Debounced filters for API calls (delayed updates)
   const debouncedFilters = useDebounce(inputFilters, 500)
@@ -39,11 +41,20 @@ export default function BuddiesPage() {
 
   const handleCreateMatch = (buddyId: string, buddyName: string) => {
     setSelectedBuddy({ id: buddyId, name: buddyName })
-    setIsModalOpen(true)
+    if (user?.role === 'HR') {
+      setIsModalOpen(true)
+    } else if (user?.role === 'BUDDY') {
+      setIsBuddyModalOpen(true)
+    }
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
+    setSelectedBuddy(null)
+  }
+
+  const handleCloseBuddyModal = () => {
+    setIsBuddyModalOpen(false)
     setSelectedBuddy(null)
   }
 
@@ -175,13 +186,13 @@ export default function BuddiesPage() {
               </div>
             </div>
 
-            {user?.role === 'HR' && (
+            {(user?.role === 'HR' || user?.role === 'BUDDY') && (
               <div className="flex space-x-2">
                 <button 
                   onClick={() => handleCreateMatch(buddy.userId, `${buddy.user.firstName} ${buddy.user.lastName}`)}
                   className="btn-primary flex-1"
                 >
-                  Create Match
+                  {user?.role === 'HR' ? 'Create Match' : 'Connect'}
                 </button>
               </div>
             )}
@@ -201,12 +212,20 @@ export default function BuddiesPage() {
 
       {/* Create Match Modal */}
       {selectedBuddy && (
-        <CreateMatchModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          buddyId={selectedBuddy.id}
-          buddyName={selectedBuddy.name}
-        />
+        <>
+          <CreateMatchModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            buddyId={selectedBuddy.id}
+            buddyName={selectedBuddy.name}
+          />
+          <BuddyMatchModal
+            isOpen={isBuddyModalOpen}
+            onClose={handleCloseBuddyModal}
+            selectedBuddyId={selectedBuddy.id}
+            selectedBuddyName={selectedBuddy.name}
+          />
+        </>
       )}
     </div>
   )

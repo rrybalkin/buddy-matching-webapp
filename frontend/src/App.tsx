@@ -8,10 +8,10 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import BuddiesPage from './pages/BuddiesPage'
+import NewComersPage from './pages/NewComersPage'
 import MatchesPage from './pages/MatchesPage'
 import MessagesPage from './pages/MessagesPage'
 import ProfilePage from './pages/ProfilePage'
-import RequestsPage from './pages/RequestsPage'
 import NotificationsPage from './pages/NotificationsPage'
 
 // Components
@@ -41,11 +41,11 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/buddies" element={<BuddiesPage />} />
+          <Route path="/newcomers" element={<NewComersPage />} />
           <Route path="/matches" element={<MatchesPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/messages/:matchId" element={<MessagesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/requests" element={<RequestsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -6,8 +6,8 @@ import { AuthRequest, requireRole } from '../middleware/auth';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Create a match (HR only)
-router.post('/', requireRole(['HR']), [
+// Create a match (HR and BUDDY roles)
+router.post('/', requireRole(['HR', 'BUDDY']), [
   body('receiverId').notEmpty(),
   body('type').isIn(['NEWCOMER_MATCH', 'RELOCATION_SUPPORT', 'OFFICE_CONNECTION']),
   body('newcomerId').optional().notEmpty(),
@@ -23,6 +23,15 @@ router.post('/', requireRole(['HR']), [
 
     const { receiverId, type, newcomerId, message, startDate, endDate } = req.body;
 
+    // Role-based validation for match types
+    if (req.user!.role === 'HR' && type !== 'NEWCOMER_MATCH') {
+      return res.status(400).json({ error: 'HR can only create NEWCOMER_MATCH type matches' });
+    }
+
+    if (req.user!.role === 'BUDDY' && (type === 'NEWCOMER_MATCH' || newcomerId)) {
+      return res.status(400).json({ error: 'BUDDY cannot create NEWCOMER_MATCH type matches or include newcomerId' });
+    }
+
     // Check if receiver is a buddy
     const receiver = await prisma.user.findUnique({
       where: { id: receiverId },
@@ -31,6 +40,11 @@ router.post('/', requireRole(['HR']), [
 
     if (!receiver || !receiver.buddyProfile) {
       return res.status(400).json({ error: 'Receiver must be a buddy' });
+    }
+
+    // For BUDDY role, prevent self-matching
+    if (req.user!.role === 'BUDDY' && receiverId === req.user!.id) {
+      return res.status(400).json({ error: 'Cannot create a match with yourself' });
     }
 
     // If newcomerId is provided, validate the newcomer
@@ -62,12 +76,20 @@ router.post('/', requireRole(['HR']), [
     }
 
     // Check for existing pending match
+    const existingMatchWhere: any = {
+      senderId: req.user!.id,
+      receiverId,
+      type,
+      status: 'PENDING'
+    };
+
+    // For newcomer matches, also check newcomerId
+    if (newcomerId) {
+      existingMatchWhere.newcomerId = newcomerId;
+    }
+
     const existingMatch = await prisma.match.findFirst({
-      where: {
-        senderId: req.user!.id,
-        receiverId,
-        status: 'PENDING'
-      }
+      where: existingMatchWhere
     });
 
     if (existingMatch) {
@@ -81,7 +103,8 @@ router.post('/', requireRole(['HR']), [
         type,
         message,
         startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null
+        endDate: endDate ? new Date(endDate) : null,
+        newcomerId: newcomerId || null
       },
       include: {
         sender: {
@@ -103,15 +126,44 @@ router.post('/', requireRole(['HR']), [
       }
     });
 
-    // Create notification
-    const notificationMessage = newcomerId 
-      ? `You have a new ${type.replace('_', ' ').toLowerCase()} request from HR for a newcomer`
-      : `You have a new ${type.replace('_', ' ').toLowerCase()} request from HR`;
+    // Create notification with enhanced message
+    let notificationMessage = '';
+    let notificationTitle = '';
+
+    if (req.user!.role === 'HR' && newcomerId) {
+      // Get newcomer details for the notification
+      const newcomer = await prisma.user.findUnique({
+        where: { id: newcomerId },
+        select: { firstName: true, lastName: true, profile: { select: { department: true, position: true } } }
+      });
+      
+      const newcomerInfo = newcomer ? 
+        `${newcomer.firstName} ${newcomer.lastName}${newcomer.profile?.department ? ` (${newcomer.profile.department})` : ''}${newcomer.profile?.position ? ` - ${newcomer.profile.position}` : ''}` : 
+        'a newcomer';
+      
+      notificationTitle = 'New Buddy Match Request from HR';
+      notificationMessage = `You have been assigned as a buddy for ${newcomerInfo}. This is a ${type.replace('_', ' ').toLowerCase()} request.`;
+    } else if (req.user!.role === 'BUDDY') {
+      const sender = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+        select: { firstName: true, lastName: true, profile: { select: { department: true, position: true } } }
+      });
+      
+      const senderInfo = sender ? 
+        `${sender.firstName} ${sender.lastName}${sender.profile?.department ? ` (${sender.profile.department})` : ''}${sender.profile?.position ? ` - ${sender.profile.position}` : ''}` : 
+        'a colleague';
+      
+      notificationTitle = 'New Buddy Connection Request';
+      notificationMessage = `${senderInfo} wants to connect with you for ${type.replace('_', ' ').toLowerCase()}.`;
+    } else {
+      notificationTitle = 'New Buddy Match Request';
+      notificationMessage = `You have a new ${type.replace('_', ' ').toLowerCase()} request from HR`;
+    }
     
     await prisma.notification.create({
       data: {
         userId: receiverId,
-        title: 'New Buddy Match Request',
+        title: notificationTitle,
         message: notificationMessage,
         type: 'MATCH_REQUEST'
       }
@@ -173,6 +225,22 @@ router.get('/', async (req: AuthRequest, res) => {
                 avatar: true,
                 department: true,
                 position: true
+              }
+            }
+          }
+        },
+        newcomer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            profile: {
+              select: {
+                department: true,
+                position: true,
+                location: true,
+                bio: true
               }
             }
           }

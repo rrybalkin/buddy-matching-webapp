@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 
 interface CreateMatchModalProps {
@@ -8,12 +9,16 @@ interface CreateMatchModalProps {
   onClose: () => void
   buddyId: string
   buddyName: string
+  newcomerId?: string
+  newcomerName?: string
 }
 
-export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }: CreateMatchModalProps) {
+export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, newcomerId, newcomerName }: CreateMatchModalProps) {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     type: 'NEWCOMER_MATCH',
-    newcomerId: '',
+    newcomerId: newcomerId || '',
+    selectedBuddyId: buddyId || '',
     message: '',
     startDate: '',
     endDate: ''
@@ -22,9 +27,34 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
 
   const queryClient = useQueryClient()
 
-  // Fetch newcomers for the dropdown
-  const { data: newcomers, isLoading: newcomersLoading } = useQuery('newcomers', () =>
-    api.get('/users?role=NEWCOMER').then(res => res.data)
+  // Get available match types based on user role
+  const getAvailableMatchTypes = () => {
+    if (user?.role === 'HR') {
+      return [
+        { value: 'NEWCOMER_MATCH', label: 'Newcomer Match' }
+      ]
+    }
+    if (user?.role === 'BUDDY') {
+      return [
+        { value: 'RELOCATION_SUPPORT', label: 'Relocation Buddy Match' },
+        { value: 'OFFICE_CONNECTION', label: 'Office Buddy Match' }
+      ]
+    }
+    return []
+  }
+
+  // Fetch newcomers for the dropdown (when not pre-selected and user is HR)
+  const { data: newcomers, isLoading: newcomersLoading } = useQuery(
+    'newcomers',
+    () => api.get('/users/newcomers').then(res => res.data),
+    { enabled: !newcomerId && user?.role === 'HR' } // Only fetch if newcomer is not pre-selected and user is HR
+  )
+
+  // Fetch available buddies (when newcomer is pre-selected or user is BUDDY)
+  const { data: buddies, isLoading: buddiesLoading } = useQuery(
+    'buddies-available',
+    () => api.get('/buddies').then(res => res.data),
+    { enabled: !!newcomerId || user?.role === 'BUDDY' } // Fetch if newcomer is pre-selected or user is BUDDY
   )
 
   // Create match mutation
@@ -34,10 +64,13 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
       onSuccess: () => {
         queryClient.invalidateQueries('matches')
         queryClient.invalidateQueries('notifications')
+        queryClient.invalidateQueries('newcomers')
+        queryClient.invalidateQueries('buddies')
         onClose()
         setFormData({
           type: 'NEWCOMER_MATCH',
           newcomerId: '',
+          selectedBuddyId: '',
           message: '',
           startDate: '',
           endDate: ''
@@ -49,22 +82,47 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.newcomerId) {
+    // Validation based on user role
+    if (user?.role === 'HR' && !formData.newcomerId) {
       alert('Please select a newcomer to match with this buddy.')
+      return
+    }
+
+    if (user?.role === 'HR' && newcomerId && !formData.selectedBuddyId) {
+      alert('Please select a buddy to assign to this newcomer.')
+      return
+    }
+
+    if (user?.role === 'BUDDY' && !formData.selectedBuddyId) {
+      alert('Please select a buddy to connect with.')
       return
     }
     
     setIsSubmitting(true)
 
     try {
-      await createMatchMutation.mutateAsync({
-        receiverId: buddyId,
-        newcomerId: formData.newcomerId,
+      const selectedBuddyId = newcomerId ? formData.selectedBuddyId : buddyId
+      const selectedBuddyName = newcomerId ? 
+        (buddies?.find((b: any) => b.userId === formData.selectedBuddyId)?.user?.firstName + ' ' + 
+         buddies?.find((b: any) => b.userId === formData.selectedBuddyId)?.user?.lastName) : 
+        buddyName
+
+      const matchData: any = {
+        receiverId: selectedBuddyId,
         type: formData.type,
-        message: formData.message || `Welcome to the team! ${buddyName} will be your buddy.`,
+        message: formData.message || (user?.role === 'HR' ? 
+          `Welcome to the team! ${selectedBuddyName} will be your buddy.` :
+          `Hi ${selectedBuddyName}, I'd like to connect with you for ${formData.type.replace('_', ' ').toLowerCase()}.`),
         startDate: formData.startDate || undefined,
         endDate: formData.endDate || undefined
-      })
+      }
+
+      // Only include newcomerId for HR-created matches
+      if (user?.role === 'HR' && formData.newcomerId) {
+        matchData.newcomerId = formData.newcomerId
+      }
+
+      await createMatchMutation.mutateAsync(matchData)
     } catch (error) {
       console.error('Error creating match:', error)
     } finally {
@@ -95,7 +153,7 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Create Match with {buddyName}
+                  {newcomerName ? `Assign Buddy to ${newcomerName}` : `Create Match with ${buddyName}`}
                 </h3>
                 <button
                   type="button"
@@ -107,38 +165,130 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Select Newcomer *
-                  </label>
-                  {newcomersLoading ? (
-                    <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 text-gray-500">
-                      Loading newcomers...
-                    </div>
-                  ) : (
-                    <select
-                      name="newcomerId"
-                      value={formData.newcomerId}
-                      onChange={handleChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    >
-                      <option value="">Choose a newcomer...</option>
-                      {newcomers?.map((newcomer: any) => (
-                        <option key={newcomer.id} value={newcomer.id}>
-                          {newcomer.firstName} {newcomer.lastName} 
-                          {newcomer.profile?.department && ` - ${newcomer.profile.department}`}
-                          {newcomer.profile?.position && ` (${newcomer.profile.position})`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  {newcomers?.length === 0 && !newcomersLoading && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      No newcomers found. Make sure newcomers are registered in the system.
-                    </p>
-                  )}
-                </div>
+                {/* HR Role - Newcomer Selection */}
+                {user?.role === 'HR' && (
+                  <>
+                    {newcomerName ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Newcomer
+                        </label>
+                        <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 bg-gray-50 text-gray-900">
+                          {newcomerName}
+                        </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Select a buddy to assign to this newcomer.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Select Newcomer *
+                        </label>
+                        {newcomersLoading ? (
+                          <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 text-gray-500">
+                            Loading newcomers...
+                          </div>
+                        ) : (
+                          <select
+                            name="newcomerId"
+                            value={formData.newcomerId}
+                            onChange={handleChange}
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          >
+                            <option value="">Choose a newcomer...</option>
+                            {newcomers?.map((newcomer: any) => (
+                              <option key={newcomer.id} value={newcomer.id}>
+                                {newcomer.firstName} {newcomer.lastName} 
+                                {newcomer.profile?.department && ` - ${newcomer.profile.department}`}
+                                {newcomer.profile?.position && ` (${newcomer.profile.position})`}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {newcomers?.length === 0 && !newcomersLoading && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            No newcomers found. Make sure newcomers are registered in the system.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {newcomerName && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Select Buddy *
+                        </label>
+                        {buddiesLoading ? (
+                          <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 text-gray-500">
+                            Loading buddies...
+                          </div>
+                        ) : (
+                          <select
+                            name="selectedBuddyId"
+                            value={formData.selectedBuddyId}
+                            onChange={handleChange}
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          >
+                            <option value="">Choose a buddy...</option>
+                            {buddies?.map((buddy: any) => (
+                              <option key={buddy.userId} value={buddy.userId}>
+                                {buddy.user.firstName} {buddy.user.lastName}
+                                {buddy.location && ` - ${buddy.location}`}
+                                {buddy.unit && ` (${buddy.unit})`}
+                                {` - ${buddy._count.receivedMatches}/${buddy.maxBuddies} buddies`}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {buddies?.length === 0 && !buddiesLoading && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            No available buddies found. All buddies may be at capacity.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* BUDDY Role - Buddy Selection */}
+                {user?.role === 'BUDDY' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Select Buddy *
+                    </label>
+                    {buddiesLoading ? (
+                      <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 text-gray-500">
+                        Loading buddies...
+                      </div>
+                    ) : (
+                      <select
+                        name="selectedBuddyId"
+                        value={formData.selectedBuddyId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      >
+                        <option value="">Choose a buddy...</option>
+                        {buddies?.filter((buddy: any) => buddy.userId !== user?.id).map((buddy: any) => (
+                          <option key={buddy.userId} value={buddy.userId}>
+                            {buddy.user.firstName} {buddy.user.lastName}
+                            {buddy.location && ` - ${buddy.location}`}
+                            {buddy.unit && ` (${buddy.unit})`}
+                            {` - ${buddy._count.receivedMatches}/${buddy.maxBuddies} buddies`}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {buddies?.length === 0 && !buddiesLoading && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        No available buddies found. All buddies may be at capacity.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -150,9 +300,11 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName }
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                   >
-                    <option value="NEWCOMER_MATCH">Newcomer Match</option>
-                    <option value="RELOCATION_SUPPORT">Relocation Support</option>
-                    <option value="OFFICE_CONNECTION">Office Connection</option>
+                    {getAvailableMatchTypes().map((matchType) => (
+                      <option key={matchType.value} value={matchType.value}>
+                        {matchType.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

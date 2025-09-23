@@ -53,6 +53,7 @@ model User {
   // Relationships
   sentMatches     Match[] @relation("SentMatches")
   receivedMatches Match[] @relation("ReceivedMatches")
+  newcomerMatches Match[] @relation("NewcomerMatches")
   messages        Message[]
   feedback        Feedback[]
   buddyRequests   BuddyRequest[]
@@ -126,6 +127,8 @@ model Match {
   message   String? // Optional message from HR
   startDate DateTime?
   endDate   DateTime?
+  newcomerId String? // Optional newcomer ID for HR-created matches
+  newcomer  User? @relation("NewcomerMatches", fields: [newcomerId], references: [id])
   
   // Metadata
   createdAt DateTime @default(now())
@@ -136,7 +139,7 @@ model Match {
   messages  Message[]
   feedback  Feedback[]
 
-  @@unique([senderId, receiverId, type])
+  @@unique([senderId, receiverId, type, newcomerId])
   @@map("matches")
 }
 

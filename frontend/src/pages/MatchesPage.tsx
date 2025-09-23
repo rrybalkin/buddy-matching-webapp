@@ -1,14 +1,39 @@
-import React from 'react'
-import { useQuery } from 'react-query'
+import React, { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 
 export default function MatchesPage() {
   const { user } = useAuth()
+  const [respondingMatch, setRespondingMatch] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   const { data: matches, isLoading } = useQuery('matches', () =>
     api.get('/matches').then(res => res.data)
   )
+
+  // Respond to match mutation
+  const respondToMatchMutation = useMutation(
+    ({ matchId, status, message }: { matchId: string, status: 'ACCEPTED' | 'REJECTED', message?: string }) =>
+      api.patch(`/matches/${matchId}/respond`, { status, message }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('matches')
+        queryClient.invalidateQueries('notifications')
+        setRespondingMatch(null)
+      }
+    }
+  )
+
+  const handleRespondToMatch = async (matchId: string, status: 'ACCEPTED' | 'REJECTED') => {
+    setRespondingMatch(matchId)
+    try {
+      await respondToMatchMutation.mutateAsync({ matchId, status })
+    } catch (error) {
+      console.error('Error responding to match:', error)
+      setRespondingMatch(null)
+    }
+  }
 
   if (isLoading) {
     return <div className="flex justify-center py-8">Loading...</div>
@@ -54,12 +79,66 @@ export default function MatchesPage() {
                 </span>
                 {match.status === 'PENDING' && match.receiverId === user?.id && (
                   <div className="flex space-x-2">
-                    <button className="btn-primary text-sm">Accept</button>
-                    <button className="btn-secondary text-sm">Reject</button>
+                    <button 
+                      onClick={() => handleRespondToMatch(match.id, 'ACCEPTED')}
+                      disabled={respondingMatch === match.id}
+                      className="btn-primary text-sm disabled:opacity-50"
+                    >
+                      {respondingMatch === match.id ? 'Processing...' : 'Accept'}
+                    </button>
+                    <button 
+                      onClick={() => handleRespondToMatch(match.id, 'REJECTED')}
+                      disabled={respondingMatch === match.id}
+                      className="btn-secondary text-sm disabled:opacity-50"
+                    >
+                      {respondingMatch === match.id ? 'Processing...' : 'Reject'}
+                    </button>
                   </div>
                 )}
               </div>
             </div>
+            
+            {/* Newcomer Information for HR-created matches */}
+            {match.newcomer && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Newcomer Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="font-medium text-blue-800">Name:</span>
+                    <span className="ml-2 text-blue-700">{match.newcomer.firstName} {match.newcomer.lastName}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-blue-800">Email:</span>
+                    <span className="ml-2 text-blue-700">{match.newcomer.email}</span>
+                  </div>
+                  {match.newcomer.profile?.department && (
+                    <div>
+                      <span className="font-medium text-blue-800">Department:</span>
+                      <span className="ml-2 text-blue-700">{match.newcomer.profile.department}</span>
+                    </div>
+                  )}
+                  {match.newcomer.profile?.position && (
+                    <div>
+                      <span className="font-medium text-blue-800">Position:</span>
+                      <span className="ml-2 text-blue-700">{match.newcomer.profile.position}</span>
+                    </div>
+                  )}
+                  {match.newcomer.profile?.location && (
+                    <div>
+                      <span className="font-medium text-blue-800">Location:</span>
+                      <span className="ml-2 text-blue-700">{match.newcomer.profile.location}</span>
+                    </div>
+                  )}
+                </div>
+                {match.newcomer.profile?.bio && (
+                  <div className="mt-2">
+                    <span className="font-medium text-blue-800">Bio:</span>
+                    <p className="mt-1 text-blue-700 text-sm">{match.newcomer.profile.bio}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {match.message && (
               <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-700">{match.message}</p>
