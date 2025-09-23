@@ -152,20 +152,20 @@ router.patch('/:id/status', async (req: AuthRequest, res) => {
 });
 
 // Get all newcomers with buddy assignment status (HR only)
-router.get('/newcomers', requireRole(['HR']), async (req: AuthRequest, res) => {
+router.get("/newcomers", requireRole(["HR"]), async (req: AuthRequest, res: Response) => {
   try {
     const { status, search } = req.query;
 
     const where: any = {
-      role: 'NEWCOMER',
+      role: "NEWCOMER",
       isActive: true
     };
 
     if (search) {
       where.OR = [
-        { firstName: { contains: search as string, mode: 'insensitive' } },
-        { lastName: { contains: search as string, mode: 'insensitive' } },
-        { email: { contains: search as string, mode: 'insensitive' } }
+        { firstName: { contains: search as string, mode: "insensitive" } },
+        { lastName: { contains: search as string, mode: "insensitive" } },
+        { email: { contains: search as string, mode: "insensitive" } }
       ];
     }
 
@@ -180,48 +180,50 @@ router.get('/newcomers', requireRole(['HR']), async (req: AuthRequest, res) => {
             startDate: true,
             bio: true
           }
-        },
-        receivedMatches: {
-          where: {
-            status: 'ACCEPTED',
-            type: 'NEWCOMER_MATCH'
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            receivedMatches: {
-              where: {
-                status: 'ACCEPTED',
-                type: 'NEWCOMER_MATCH'
-              }
-            }
-          }
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: "desc"
+      }
+    });
+
+    // Get all matches for newcomers
+    const newcomerIds = newcomers.map(n => n.id);
+    const matches = await prisma.match.findMany({
+      where: {
+        newcomerId: { in: newcomerIds },
+        status: "ACCEPTED",
+        type: "NEWCOMER_MATCH"
+      },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // Create a map of newcomerId to their assigned buddy
+    const newcomerToBuddyMap = new Map();
+    matches.forEach(match => {
+      if (match.newcomerId) {
+        newcomerToBuddyMap.set(match.newcomerId, match.receiver);
       }
     });
 
     // Add buddy assignment status to each newcomer
     const newcomersWithStatus = newcomers.map(newcomer => {
-      const hasBuddy = newcomer._count.receivedMatches > 0;
-      const buddy = newcomer.receivedMatches[0]?.sender;
+      const assignedBuddy = newcomerToBuddyMap.get(newcomer.id);
+      const hasBuddy = !!assignedBuddy;
       
       return {
         ...newcomer,
-        buddyStatus: hasBuddy ? 'assigned' : 'unassigned',
-        assignedBuddy: buddy || null
+        buddyStatus: hasBuddy ? "assigned" : "unassigned",
+        assignedBuddy: assignedBuddy || null
       };
     });
 
@@ -233,8 +235,8 @@ router.get('/newcomers', requireRole(['HR']), async (req: AuthRequest, res) => {
 
     res.json(filteredNewcomers);
   } catch (error) {
-    console.error('Get newcomers error:', error);
-    res.status(500).json({ error: 'Failed to fetch newcomers' });
+    console.error("Get newcomers error:", error);
+    res.status(500).json({ error: "Failed to fetch newcomers" });
   }
 });
 

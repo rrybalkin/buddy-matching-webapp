@@ -14,10 +14,6 @@ export function formatRoleForDisplay(role: string): string {
       return 'Buddy'
     case 'NEWCOMER':
       return 'Newcomer'
-    case 'RELOCATED_EMPLOYEE':
-      return 'Relocated Employee'
-    case 'EXISTING_EMPLOYEE':
-      return 'Existing Employee'
     default:
       return role
   }

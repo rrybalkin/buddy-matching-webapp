@@ -13,7 +13,27 @@ router.post('/register', [
   body('password').isLength({ min: 6 }),
   body('firstName').notEmpty().trim(),
   body('lastName').notEmpty().trim(),
-  body('role').isIn(['HR', 'BUDDY', 'NEWCOMER', 'RELOCATED_EMPLOYEE', 'EXISTING_EMPLOYEE'])
+  body('role').isIn(['HR', 'BUDDY']),
+  // Profile fields (optional)
+  body('phone').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) {
+      return true; // Allow empty values
+    }
+    return value.length >= 10 && value.length <= 15;
+  }).withMessage('Phone number must be 10-15 characters long'),
+  body('bio').optional().isLength({ max: 500 }),
+  body('location').optional().trim(),
+  body('department').optional().trim(),
+  body('position').optional().trim(),
+  body('interests').optional().isArray(),
+  body('languages').optional().isArray(),
+  // Buddy-specific fields (optional)
+  body('unit').optional().trim(),
+  body('techStack').optional().isArray(),
+  body('maxBuddies').optional().isInt({ min: 1, max: 10 }),
+  body('experience').optional().trim(),
+  body('mentoringStyle').optional().trim(),
+  body('availability').optional().trim()
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -21,7 +41,28 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, firstName, lastName, role } = req.body;
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      role,
+      // Profile fields
+      phone,
+      bio,
+      location,
+      department,
+      position,
+      interests,
+      languages,
+      // Buddy-specific fields
+      unit,
+      techStack,
+      maxBuddies,
+      experience,
+      mentoringStyle,
+      availability
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -35,15 +76,52 @@ router.post('/register', [
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Create user with profile and buddy profile
+    const userData: any = {
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      role
+    };
+
+    // Create user profile if any profile data is provided
+    const hasProfileData = phone || bio || location || department || position || 
+                          (interests && interests.length > 0) || (languages && languages.length > 0);
+    
+    if (hasProfileData) {
+      userData.profile = {
+        create: {
+          phone: phone || null,
+          bio: bio || null,
+          location: location || null,
+          department: department || null,
+          position: position || null,
+          interests: interests || [],
+          languages: languages || []
+        }
+      };
+    }
+
+    // If user is registering as BUDDY, create buddy profile
+    if (role === 'BUDDY') {
+      userData.buddyProfile = {
+        create: {
+          location: location || 'Not specified',
+          unit: unit || 'Not specified',
+          techStack: techStack || [],
+          interests: interests || [],
+          maxBuddies: maxBuddies || 3,
+          isAvailable: true,
+          experience: experience || null,
+          mentoringStyle: mentoringStyle || null,
+          availability: availability || null
+        }
+      };
+    }
+
     const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        role
-      },
+      data: userData,
       select: {
         id: true,
         email: true,

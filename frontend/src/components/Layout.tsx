@@ -19,10 +19,10 @@ import { formatRoleForDisplay } from '../lib/roleUtils'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'My Buddies', href: '/my-buddies', icon: ChatBubbleLeftRightIcon, roles: ['BUDDY', 'NEWCOMER'] },
   { name: 'Buddies', href: '/buddies', icon: UserGroupIcon, roles: ['HR', 'BUDDY'] },
   { name: 'NewComers', href: '/newcomers', icon: UserPlusIcon, roles: ['HR'] },
   { name: 'Matches', href: '/matches', icon: ChatBubbleLeftRightIcon },
-  { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Profile', href: '/profile', icon: UserIcon },
 ]
 

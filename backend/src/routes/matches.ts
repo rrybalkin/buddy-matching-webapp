@@ -165,7 +165,8 @@ router.post('/', requireRole(['HR', 'BUDDY']), [
         userId: receiverId,
         title: notificationTitle,
         message: notificationMessage,
-        type: 'MATCH_REQUEST'
+        type: 'MATCH_REQUEST',
+        matchId: match.id
       }
     });
 
@@ -184,7 +185,8 @@ router.get('/', async (req: AuthRequest, res) => {
     const where: any = {
       OR: [
         { senderId: req.user!.id },
-        { receiverId: req.user!.id }
+        { receiverId: req.user!.id },
+        { newcomerId: req.user!.id }
       ]
     };
 
@@ -248,6 +250,18 @@ router.get('/', async (req: AuthRequest, res) => {
         _count: {
           select: {
             messages: true
+          }
+        },
+        messages: {
+          take: 1,
+          orderBy: {
+            createdAt: 'desc'
+          },
+          select: {
+            content: true,
+            createdAt: true,
+            senderId: true,
+            isRead: true
           }
         }
       },
@@ -342,7 +356,8 @@ router.patch('/:id/respond', requireRole(['BUDDY']), [
         userId: match.senderId,
         title: `Match ${status}`,
         message: `Your buddy match request has been ${status.toLowerCase()}`,
-        type: 'MATCH_RESPONSE'
+        type: 'MATCH_RESPONSE',
+        matchId: match.id
       }
     });
 
@@ -350,6 +365,114 @@ router.patch('/:id/respond', requireRole(['BUDDY']), [
   } catch (error) {
     console.error('Respond to match error:', error);
     res.status(500).json({ error: 'Failed to respond to match' });
+  }
+});
+
+// Get messages for a specific match
+router.get('/:id/messages', async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verify user has access to this match
+    const match = await prisma.match.findFirst({
+      where: {
+        id,
+        OR: [
+          { senderId: req.user!.id },
+          { receiverId: req.user!.id },
+          { newcomerId: req.user!.id }
+        ]
+      }
+    });
+
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    const messages = await prisma.message.findMany({
+      where: { matchId: id },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profile: {
+              select: {
+                avatar: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error('Get match messages error:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Send a message to a match
+router.post('/:id/messages', [
+  body('content').notEmpty().trim().isLength({ min: 1, max: 1000 })
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const { content } = req.body;
+
+    // Verify user has access to this match and it's accepted
+    const match = await prisma.match.findFirst({
+      where: {
+        id,
+        OR: [
+          { senderId: req.user!.id },
+          { receiverId: req.user!.id },
+          { newcomerId: req.user!.id }
+        ],
+        status: 'ACCEPTED'
+      }
+    });
+
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found or not accepted' });
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        matchId: id,
+        senderId: req.user!.id,
+        content
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profile: {
+              select: {
+                avatar: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Send match message error:', error);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 

@@ -131,8 +131,6 @@ The application comes with pre-seeded test accounts:
 | Buddy | jane.smith@company.com | password123 | Product Manager |
 | Buddy | mike.wilson@company.com | password123 | UX Designer |
 | Newcomer | alex.newcomer@company.com | password123 | Junior Developer |
-| Relocated | relocated@company.com | password123 | Recently relocated employee |
-| Existing | existing@company.com | password123 | Employee seeking connection |
 
 ## 📱 User Roles & Features
 
@@ -156,15 +154,12 @@ The application comes with pre-seeded test accounts:
 - Provide feedback after match period
 - Update profile information
 
-### Relocated Employee
-- Request relocation support buddy
-- Connect with local team members
-- Access location-specific resources
-
-### Existing Employee
-- Request office connection buddy
-- Find team members with similar interests
-- Improve workplace integration
+### Buddy (Volunteer)
+- Help newcomers settle into the company
+- Support relocated employees with relocation needs
+- Connect with existing employees seeking office connections
+- Manage availability and capacity
+- Provide guidance and support through different request types
 
 ## 🔧 Development
 

@@ -56,13 +56,47 @@ export default function MatchesPage() {
                 <div className="flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
                     <span className="text-sm font-medium text-primary-600">
-                      {match.senderId === user?.id ? match.receiver.firstName[0] : match.sender.firstName[0]}
+                      {(() => {
+                        // For HR-created matches (NEWCOMER_MATCH), show the appropriate partner initials
+                        if (match.type === 'NEWCOMER_MATCH' && match.newcomer) {
+                          // If current user is the receiver (buddy), show the newcomer initials
+                          if (match.receiverId === user?.id) {
+                            return match.newcomer.firstName[0]
+                          }
+                          // If current user is the newcomer, show the receiver (buddy) initials
+                          if (match.newcomer.id === user?.id) {
+                            return match.receiver.firstName[0]
+                          }
+                          // If current user is HR, show the buddy initials
+                          return match.receiver.firstName[0]
+                        }
+                        // For other match types, use standard logic
+                        return match.senderId === user?.id ? match.receiver.firstName[0] : match.sender.firstName[0]
+                      })()}
                     </span>
                   </div>
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    {match.senderId === user?.id ? match.receiver.firstName : match.sender.firstName} {match.senderId === user?.id ? match.receiver.lastName : match.sender.lastName}
+                    {(() => {
+                      // For HR-created matches (NEWCOMER_MATCH), show the appropriate partner
+                      if (match.type === 'NEWCOMER_MATCH' && match.newcomer) {
+                        // If current user is the receiver (buddy), show the newcomer
+                        if (match.receiverId === user?.id) {
+                          return `${match.newcomer.firstName} ${match.newcomer.lastName}`
+                        }
+                        // If current user is the newcomer, show the receiver (buddy)
+                        if (match.newcomer.id === user?.id) {
+                          return `${match.receiver.firstName} ${match.receiver.lastName}`
+                        }
+                        // If current user is HR, show both buddy and newcomer
+                        return `${match.receiver.firstName} ${match.receiver.lastName} → ${match.newcomer.firstName} ${match.newcomer.lastName}`
+                      }
+                      // For other match types, use standard logic
+                      return match.senderId === user?.id ? 
+                        `${match.receiver.firstName} ${match.receiver.lastName}` : 
+                        `${match.sender.firstName} ${match.sender.lastName}`
+                    })()}
                   </h3>
                   <p className="text-sm text-gray-500 capitalize">
                     {match.type.replace('_', ' ').toLowerCase()}

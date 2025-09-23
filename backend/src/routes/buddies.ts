@@ -6,6 +6,34 @@ import { AuthRequest, requireRole } from '../middleware/auth';
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Get current user's buddy profile
+router.get('/me', requireRole(['BUDDY']), async (req: AuthRequest, res) => {
+  try {
+    const buddyProfile = await prisma.buddyProfile.findUnique({
+      where: { userId: req.user!.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!buddyProfile) {
+      return res.status(404).json({ error: 'Buddy profile not found' });
+    }
+
+    res.json(buddyProfile);
+  } catch (error) {
+    console.error('Get buddy profile error:', error);
+    res.status(500).json({ error: 'Failed to fetch buddy profile' });
+  }
+});
+
 // Get all buddy profiles with filters
 router.get('/', async (req: AuthRequest, res) => {
   try {
@@ -13,7 +41,9 @@ router.get('/', async (req: AuthRequest, res) => {
     
     const where: any = {
       isAvailable: available === 'true' ? true : undefined,
-      user: { isActive: true }
+      user: { isActive: true },
+      // Exclude current user from buddies list
+      userId: { not: req.user?.id }
     };
 
     if (location) {
@@ -165,7 +195,58 @@ router.post('/', requireRole(['BUDDY']), [
   }
 });
 
-// Update buddy profile
+// Update current user's buddy profile
+router.put('/me', requireRole(['BUDDY']), [
+  body('location').optional().trim(),
+  body('unit').optional().trim(),
+  body('techStack').optional().isArray(),
+  body('interests').optional().isArray(),
+  body('maxBuddies').optional().isInt({ min: 1, max: 10 }),
+  body('experience').optional().trim(),
+  body('mentoringStyle').optional().trim(),
+  body('availability').optional().trim(),
+  body('isAvailable').optional().isBoolean()
+], async (req: AuthRequest, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const updateData = req.body;
+
+    // Check if buddy profile exists
+    const existingProfile = await prisma.buddyProfile.findUnique({
+      where: { userId: req.user!.id }
+    });
+
+    if (!existingProfile) {
+      return res.status(404).json({ error: 'Buddy profile not found' });
+    }
+
+    const updatedProfile = await prisma.buddyProfile.update({
+      where: { userId: req.user!.id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error('Update buddy profile error:', error);
+    res.status(500).json({ error: 'Failed to update buddy profile' });
+  }
+});
+
+// Update buddy profile by ID
 router.put('/:id', requireRole(['BUDDY']), [
   body('location').optional().trim(),
   body('unit').optional().trim(),

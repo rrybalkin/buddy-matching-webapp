@@ -129,7 +129,8 @@ export const initializeSocket = (io: Server) => {
             userId: otherUserId,
             title: 'New Message',
             message: `You have a new message from ${message.sender.firstName} ${message.sender.lastName}`,
-            type: 'MESSAGE'
+            type: 'MESSAGE',
+            matchId: matchId
           }
         });
 

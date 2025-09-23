@@ -152,11 +152,114 @@ export default function DashboardPage() {
                     <div key={match.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {match.senderId === user.id ? match.receiver.firstName : match.sender.firstName} {match.senderId === user.id ? match.receiver.lastName : match.sender.lastName}
+                          {(() => {
+                            // For HR-created matches (NEWCOMER_MATCH), show the appropriate partner
+                            if (match.type === 'NEWCOMER_MATCH' && match.newcomer) {
+                              // If current user is the receiver (buddy), show the newcomer
+                              if (match.receiverId === user.id) {
+                                return `${match.newcomer.firstName} ${match.newcomer.lastName}`
+                              }
+                              // If current user is the newcomer, show the receiver (buddy)
+                              if (match.newcomer.id === user.id) {
+                                return `${match.receiver.firstName} ${match.receiver.lastName}`
+                              }
+                              // If current user is HR, show both buddy and newcomer
+                              return `${match.receiver.firstName} ${match.receiver.lastName} → ${match.newcomer.firstName} ${match.newcomer.lastName}`
+                            }
+                            // For other match types, use standard logic
+                            return match.senderId === user.id ? 
+                              `${match.receiver.firstName} ${match.receiver.lastName}` : 
+                              `${match.sender.firstName} ${match.sender.lastName}`
+                          })()}
                         </p>
                         <p className="text-sm text-gray-500 capitalize">
                           {match.type.replace('_', ' ').toLowerCase()}
                         </p>
+                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        match.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                        match.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {match.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+
+      case 'NEWCOMER':
+        const newcomerMatches = matches?.filter((m: any) => 
+          m.newcomerId === user.id || (m.senderId === user.id || m.receiverId === user.id)
+        ) || []
+
+        const acceptedMatches = newcomerMatches.filter((m: any) => m.status === 'ACCEPTED')
+        const pendingMatches = newcomerMatches.filter((m: any) => m.status === 'PENDING')
+
+        return (
+          <div className="space-y-6">
+            {acceptedMatches.length > 0 ? (
+              <div className="card">
+                <div className="text-center">
+                  <CheckCircleIcon className="mx-auto h-12 w-12 text-green-600 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Your Buddy Match is Ready!</h3>
+                  <p className="text-gray-600 mb-4">
+                    You've been matched with a buddy who can help you get started.
+                  </p>
+                </div>
+              </div>
+            ) : pendingMatches.length > 0 ? (
+              <div className="card">
+                <div className="text-center">
+                  <ClockIcon className="mx-auto h-12 w-12 text-yellow-600 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Buddy Match Pending</h3>
+                  <p className="text-gray-600 mb-4">
+                    Your buddy match request is being reviewed. You'll be notified once it's confirmed.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="card">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome to BuddyMatch!</h3>
+                  <p className="text-gray-600 mb-4">
+                    We're setting up your buddy match. You'll be notified once it's ready!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {newcomerMatches.length > 0 && (
+              <div className="card">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Your Matches</h3>
+                <div className="space-y-3">
+                  {newcomerMatches.map((match: any) => (
+                    <div key={match.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {(() => {
+                            // For NEWCOMER_MATCH type, show the buddy (receiver)
+                            if (match.type === 'NEWCOMER_MATCH') {
+                              return `${match.receiver.firstName} ${match.receiver.lastName}`
+                            }
+                            // For other match types, show the appropriate partner
+                            return match.senderId === user.id ? 
+                              `${match.receiver.firstName} ${match.receiver.lastName}` : 
+                              `${match.sender.firstName} ${match.sender.lastName}`
+                          })()}
+                        </p>
+                        <p className="text-sm text-gray-500 capitalize">
+                          {match.type.replace('_', ' ').toLowerCase()}
+                        </p>
+                        {match.receiver.profile?.department && (
+                          <p className="text-xs text-gray-400">
+                            {match.receiver.profile.department}
+                            {match.receiver.profile.position && ` - ${match.receiver.profile.position}`}
+                          </p>
+                        )}
                       </div>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         match.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
@@ -179,15 +282,11 @@ export default function DashboardPage() {
             <div className="text-center">
               <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome to BuddyMatch!</h3>
               <p className="text-gray-600 mb-4">
-                {user?.role === 'NEWCOMER' && "We're setting up your buddy match. You'll be notified once it's ready!"}
-                {user?.role === 'RELOCATED_EMPLOYEE' && "Request a relocation buddy to help you settle in."}
-                {user?.role === 'EXISTING_EMPLOYEE' && "Find an office buddy to help you feel more connected."}
+                Welcome! You can help newcomers and other employees by being their buddy.
               </p>
-              {user?.role !== 'NEWCOMER' && (
-                <button className="btn-primary">
-                  Request a Buddy
-                </button>
-              )}
+              <button className="btn-primary">
+                Request a Buddy
+              </button>
             </div>
           </div>
         )

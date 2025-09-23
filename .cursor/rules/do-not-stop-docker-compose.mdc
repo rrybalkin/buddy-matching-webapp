@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Do not stop docker-compose with backend and frontend server after making fixes. Or start it again if you need to stop it by some reason.

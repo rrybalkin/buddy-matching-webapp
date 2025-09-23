@@ -11,6 +11,7 @@ import BuddiesPage from './pages/BuddiesPage'
 import NewComersPage from './pages/NewComersPage'
 import MatchesPage from './pages/MatchesPage'
 import MessagesPage from './pages/MessagesPage'
+import MyBuddiesPage from './pages/MyBuddiesPage'
 import ProfilePage from './pages/ProfilePage'
 import NotificationsPage from './pages/NotificationsPage'
 
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Layout>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/my-buddies" element={<MyBuddiesPage />} />
           <Route path="/buddies" element={<BuddiesPage />} />
           <Route path="/newcomers" element={<NewComersPage />} />
           <Route path="/matches" element={<MatchesPage />} />

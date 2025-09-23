@@ -415,53 +415,6 @@ async function main() {
     });
   }
 
-  // Create relocated employee
-  const relocatedPassword = await bcrypt.hash('password123', 12);
-  await prisma.user.upsert({
-    where: { email: 'relocated@company.com' },
-    update: {},
-    create: {
-      email: 'relocated@company.com',
-      password: relocatedPassword,
-      firstName: 'Emma',
-      lastName: 'Relocated',
-      role: 'RELOCATED_EMPLOYEE',
-      profile: {
-        create: {
-          department: 'Sales',
-          position: 'Account Manager',
-          location: 'Chicago',
-          bio: 'Recently relocated and looking for support in my new city.',
-          interests: ['Networking', 'City Exploration', 'Team Building'],
-          languages: ['English', 'French']
-        }
-      }
-    }
-  });
-
-  // Create existing employee
-  const existingPassword = await bcrypt.hash('password123', 12);
-  await prisma.user.upsert({
-    where: { email: 'existing@company.com' },
-    update: {},
-    create: {
-      email: 'existing@company.com',
-      password: existingPassword,
-      firstName: 'David',
-      lastName: 'Existing',
-      role: 'EXISTING_EMPLOYEE',
-      profile: {
-        create: {
-          department: 'Operations',
-          position: 'Operations Analyst',
-          location: 'Seattle',
-          bio: 'Been with the company for a while but looking to connect more with colleagues.',
-          interests: ['Process Improvement', 'Data Analysis', 'Team Collaboration'],
-          languages: ['English']
-        }
-      }
-    }
-  });
 
   console.log('✅ Database seeded successfully!');
   console.log(`\n📋 Generated ${buddyUsers.length} buddy profiles with diverse locations, tech stacks, and interests!`);
@@ -469,8 +422,6 @@ async function main() {
   console.log('HR: hr@company.com / password123');
   console.log('Buddy: john.doe@company.com / password123');
   console.log('Newcomer: alex.newcomer@company.com / password123');
-  console.log('Relocated: relocated@company.com / password123');
-  console.log('Existing: existing@company.com / password123');
   console.log('\n🌍 Buddy Locations: Europe (Serbia, Bulgaria, Spain), Turkey, Georgia, Ukraine, and more!');
   console.log('💻 Tech Stacks: Java, AI/ML, Cloud, DevOps, Frontend, Backend, Mobile, Security, Data Engineering');
   console.log('🎯 Interests: Bicycle, Hiking, Movies, PlayStation, Gaming, Photography, Coffee, and more!');
