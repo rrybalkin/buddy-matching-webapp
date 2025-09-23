@@ -10,12 +10,38 @@ async function main() {
   const hrPassword = await bcrypt.hash('password123', 12);
   const hrUser = await prisma.user.upsert({
     where: { email: 'hr@company.com' },
-    update: {},
+    update: {
+      firstName: 'Human',
+      lastName: 'Resources',
+      password: hrPassword,
+      profile: {
+        upsert: {
+          create: {
+            phone: '+1-555-0101',
+            department: 'Human Resources',
+            position: 'HR Manager',
+            location: 'New York',
+            bio: 'Passionate about creating great employee experiences and fostering connections.',
+            interests: ['Team Building', 'Employee Development', 'Workplace Culture'],
+            languages: ['English', 'Spanish']
+          },
+          update: {
+            phone: '+1-555-0101',
+            department: 'Human Resources',
+            position: 'HR Manager',
+            location: 'New York',
+            bio: 'Passionate about creating great employee experiences and fostering connections.',
+            interests: ['Team Building', 'Employee Development', 'Workplace Culture'],
+            languages: ['English', 'Spanish']
+          }
+        }
+      }
+    },
     create: {
       email: 'hr@company.com',
       password: hrPassword,
-      firstName: 'Sarah',
-      lastName: 'Johnson',
+      firstName: 'Human',
+      lastName: 'Resources',
       role: 'HR',
       profile: {
         create: {

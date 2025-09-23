@@ -35,7 +35,6 @@ export default function RegisterPage() {
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<RegisterForm>()
 
   const password = watch('password')
-  const selectedRole = watch('role')
   
   // State for dynamic arrays
   const [interests, setInterests] = useState<string[]>([])
@@ -103,6 +102,9 @@ export default function RegisterPage() {
     try {
       const { confirmPassword, ...userData } = data
       
+      // Always set role to BUDDY for sign-up form
+      userData.role = 'BUDDY'
+      
       // Filter out empty string values for optional fields
       Object.keys(userData).forEach(key => {
         if (userData[key] === '') {
@@ -113,9 +115,7 @@ export default function RegisterPage() {
       // Add the array data from state
       userData.interests = interests
       userData.languages = languages
-      if (selectedRole === 'BUDDY') {
-        userData.techStack = techStack
-      }
+      userData.techStack = techStack
       
       await registerUser(userData)
       toast.success('Registration successful!')
@@ -198,22 +198,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
-                Role
-              </label>
-              <select
-                {...register('role', { required: 'Role is required' })}
-                className="mt-1 block w-full px-3 py-2 border border-slate-300 bg-white/50 backdrop-blur-sm rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="">Select your role</option>
-                <option value="HR">HR (Human Resources)</option>
-                <option value="BUDDY">Buddy (Volunteer to help others)</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
-              )}
-            </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -272,7 +256,7 @@ export default function RegisterPage() {
                   </label>
                   <input
                     {...register('location', { 
-                      required: watch('role') === 'BUDDY' ? 'Location is required for buddies' : false 
+                      required: 'Location is required for buddies' 
                     })}
                     type="text"
                     className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
@@ -419,9 +403,8 @@ export default function RegisterPage() {
               </div>
 
               {/* Buddy-specific fields */}
-              {selectedRole === 'BUDDY' && (
-                <div className="border-t pt-6 mt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Buddy Profile</h3>
+              <div className="border-t pt-6 mt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Buddy Profile</h3>
                   
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -430,7 +413,7 @@ export default function RegisterPage() {
                       </label>
                       <input
                         {...register('unit', { 
-                          required: watch('role') === 'BUDDY' ? 'Unit is required for buddies' : false 
+                          required: 'Unit is required for buddies' 
                         })}
                         type="text"
                         className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
@@ -447,7 +430,7 @@ export default function RegisterPage() {
                       </label>
                       <select
                         {...register('maxBuddies', { 
-                          required: watch('role') === 'BUDDY' ? 'Max buddies is required' : false,
+                          required: 'Max buddies is required',
                           valueAsNumber: true 
                         })}
                         className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
@@ -551,7 +534,6 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
-              )}
             </div>
           </div>
 

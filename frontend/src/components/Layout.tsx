@@ -10,8 +10,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
-  UserPlusIcon,
-  HeartIcon
+  UserPlusIcon
 } from '@heroicons/react/24/outline'
 import { useSocket } from '../contexts/SocketContext'
 import { useQuery } from 'react-query'
@@ -57,7 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center space-x-2">
-              <HeartIcon className="h-6 w-6 text-primary-600" />
+              <UserGroupIcon className="h-6 w-6 text-primary-600" />
               <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
             </div>
             <button
@@ -100,7 +99,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           <div className="flex h-16 items-center px-4">
             <div className="flex items-center space-x-2">
-              <HeartIcon className="h-6 w-6 text-primary-600" />
+              <UserGroupIcon className="h-6 w-6 text-primary-600" />
               <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
             </div>
           </div>

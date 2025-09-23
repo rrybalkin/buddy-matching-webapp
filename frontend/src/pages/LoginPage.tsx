@@ -107,15 +107,6 @@ export default function LoginPage() {
             </p>
           </div>
         </form>
-
-          <div className="mt-8 bg-blue-50/60 backdrop-blur-sm border border-blue-200/40 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">Test Accounts:</h3>
-            <div className="text-xs text-blue-700 space-y-1">
-              <div>HR: hr@company.com / password123</div>
-              <div>Buddy: john.doe@company.com / password123</div>
-              <div>Newcomer: alex.newcomer@company.com / password123</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
