@@ -134,7 +134,7 @@ export default function NewComersPage() {
 
         {/* NewComer Cards */}
         {newcomers?.map((newcomer: any) => (
-          <div key={newcomer.id} className="card" data-testid="newcomer-card">
+          <div key={newcomer.id} className="card flex flex-col h-full" data-testid="newcomer-card">
             <div className="flex items-center space-x-3 mb-4">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -195,15 +195,16 @@ export default function NewComersPage() {
               </div>
             )}
 
-            <div className="flex space-x-2">
-              <button 
-                onClick={() => handleAssignBuddy(newcomer.id, `${newcomer.firstName} ${newcomer.lastName}`)}
-                className="btn-primary flex-1"
-                disabled={newcomer.buddyStatus === 'assigned'}
-              >
-                {newcomer.buddyStatus === 'assigned' ? 'Already Assigned' : 'Assign Buddy'}
-              </button>
-            </div>
+            {newcomer.buddyStatus !== 'assigned' && (
+              <div className="flex space-x-2 mt-auto">
+                <button 
+                  onClick={() => handleAssignBuddy(newcomer.id, `${newcomer.firstName} ${newcomer.lastName}`)}
+                  className="btn-primary flex-1"
+                >
+                  Assign Buddy
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

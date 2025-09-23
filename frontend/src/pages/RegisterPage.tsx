@@ -128,13 +128,22 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage: 'url(/background_blue.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <div className="max-w-2xl w-full space-y-8">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/30">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-800">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-slate-600">
             Join BuddyMatch and start connecting
           </p>
         </div>
@@ -142,26 +151,26 @@ export default function RegisterPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-slate-700">
                   First Name
                 </label>
                 <input
                   {...register('firstName', { required: 'First name is required' })}
                   type="text"
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-400 text-slate-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
                 )}
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-slate-700">
                   Last Name
                 </label>
                 <input
                   {...register('lastName', { required: 'Last name is required' })}
                   type="text"
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-400 text-slate-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
@@ -170,7 +179,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                 Email Address
               </label>
               <input
@@ -182,7 +191,7 @@ export default function RegisterPage() {
                   }
                 })}
                 type="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-slate-300 placeholder-slate-400 text-slate-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -190,12 +199,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
                 Role
               </label>
               <select
                 {...register('role', { required: 'Role is required' })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-slate-300 bg-white/50 backdrop-blur-sm rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
                 <option value="">Select your role</option>
                 <option value="HR">HR (Human Resources)</option>
@@ -342,7 +351,7 @@ export default function RegisterPage() {
                       value={newInterest}
                       onChange={(e) => setNewInterest(e.target.value)}
                       placeholder="Add an interest..."
-                      className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-l-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
@@ -353,7 +362,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={addInterest}
-                      className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      className="px-3 py-2 border border-l-0 border-slate-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
                     >
                       Add
                     </button>
@@ -390,7 +399,7 @@ export default function RegisterPage() {
                       value={newLanguage}
                       onChange={(e) => setNewLanguage(e.target.value)}
                       placeholder="Add a language..."
-                      className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-l-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
@@ -401,7 +410,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={addLanguage}
-                      className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      className="px-3 py-2 border border-l-0 border-slate-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
                     >
                       Add
                     </button>
@@ -485,7 +494,7 @@ export default function RegisterPage() {
                           value={newTech}
                           onChange={(e) => setNewTech(e.target.value)}
                           placeholder="Add a technology..."
-                          className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          className="flex-1 px-3 py-2 border border-slate-300 rounded-l-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white/50 backdrop-blur-sm"
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
@@ -496,7 +505,7 @@ export default function RegisterPage() {
                         <button
                           type="button"
                           onClick={addTech}
-                          className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
+                          className="px-3 py-2 border border-l-0 border-slate-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100"
                         >
                           Add
                         </button>
@@ -550,21 +559,22 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 shadow-lg"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
+              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
                 Sign in
               </Link>
             </p>
           </div>
         </form>
+        </div>
       </div>
     </div>
   )

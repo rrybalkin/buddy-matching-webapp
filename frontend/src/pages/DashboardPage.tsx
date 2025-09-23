@@ -8,8 +8,10 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  BellIcon
+  BellIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline'
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -23,6 +25,12 @@ export default function DashboardPage() {
   const { data: buddyStats, error: buddyStatsError, isLoading: buddyStatsLoading } = useQuery(
     'buddy-dashboard',
     () => api.get('/buddies/dashboard').then(res => res.data),
+    { enabled: user?.role === 'HR', retry: 1 }
+  )
+
+  const { data: newcomers, error: newcomersError, isLoading: newcomersLoading } = useQuery(
+    'newcomers-dashboard',
+    () => api.get('/users/newcomers').then(res => res.data),
     { enabled: user?.role === 'HR', retry: 1 }
   )
 
@@ -41,61 +49,141 @@ export default function DashboardPage() {
   const getRoleBasedContent = () => {
     switch (user?.role) {
       case 'HR':
+        // Calculate newcomer buddy assignment statistics
+        const totalNewcomers = newcomers?.length || 0
+        const assignedNewcomers = newcomers?.filter((n: any) => n.buddyStatus === 'assigned').length || 0
+        const unassignedNewcomers = totalNewcomers - assignedNewcomers
+
+        const pieChartData = [
+          { name: 'With Buddies', value: assignedNewcomers, color: '#10B981' },
+          { name: 'Without Buddies', value: unassignedNewcomers, color: '#EF4444' }
+        ]
+
         return (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="card">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <UserGroupIcon className="h-8 w-8 text-primary-600" />
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <UserGroupIcon className="h-8 w-8 text-primary-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Total Buddies
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {buddyStats?.length || 0}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Buddies
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {buddyStats?.length || 0}
-                    </dd>
-                  </dl>
+              </div>
+
+              <div className="card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <UserPlusIcon className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Total Newcomers
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {totalNewcomers}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Active Matches
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {matches?.filter((m: any) => m.status === 'ACCEPTED').length || 0}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <ClockIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Pending Matches
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {matches?.filter((m: any) => m.status === 'PENDING').length || 0}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="card">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircleIcon className="h-8 w-8 text-green-600" />
+            {/* Pie Chart */}
+            {totalNewcomers > 0 && (
+              <div className="card">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Newcomer Buddy Assignment Status</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: any) => [value, 'Newcomers']}
+                        labelFormatter={(label: string) => `Status: ${label}`}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value: string) => (
+                          <span style={{ color: '#374151', fontSize: '14px' }}>
+                            {value}
+                          </span>
+                        )}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Matches
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {matches?.filter((m: any) => m.status === 'ACCEPTED').length || 0}
-                    </dd>
-                  </dl>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">{assignedNewcomers}</div>
+                    <div className="text-sm text-gray-500">With Buddies</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-red-600">{unassignedNewcomers}</div>
+                    <div className="text-sm text-gray-500">Without Buddies</div>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="card">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ClockIcon className="h-8 w-8 text-yellow-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Pending Matches
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {matches?.filter((m: any) => m.status === 'PENDING').length || 0}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )
 
@@ -294,7 +382,7 @@ export default function DashboardPage() {
   }
 
   // Show loading state
-  if (matchesLoading || (user?.role === 'HR' && buddyStatsLoading)) {
+  if (matchesLoading || (user?.role === 'HR' && (buddyStatsLoading || newcomersLoading))) {
     return (
       <div className="space-y-6">
         <div>
@@ -313,7 +401,7 @@ export default function DashboardPage() {
   }
 
   // Show error state if there are critical errors
-  if (matchesError || (user?.role === 'HR' && buddyStatsError)) {
+  if (matchesError || (user?.role === 'HR' && (buddyStatsError || newcomersError))) {
     return (
       <div className="space-y-6">
         <div>

@@ -198,7 +198,7 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                           >
                             <option value="">Choose a newcomer...</option>
-                            {newcomers?.map((newcomer: any) => (
+                            {newcomers?.filter((newcomer: any) => newcomer.buddyStatus !== 'assigned').map((newcomer: any) => (
                               <option key={newcomer.id} value={newcomer.id}>
                                 {newcomer.firstName} {newcomer.lastName} 
                                 {newcomer.profile?.department && ` - ${newcomer.profile.department}`}
@@ -206,6 +206,11 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
                               </option>
                             ))}
                           </select>
+                        )}
+                        {newcomers?.filter((newcomer: any) => newcomer.buddyStatus !== 'assigned').length === 0 && !newcomersLoading && newcomers && newcomers.length > 0 && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            All newcomers already have assigned buddies.
+                          </p>
                         )}
                         {newcomers?.length === 0 && !newcomersLoading && (
                           <p className="mt-1 text-sm text-gray-500">

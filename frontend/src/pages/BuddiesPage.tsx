@@ -126,7 +126,7 @@ export default function BuddiesPage() {
       {/* Buddy Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {buddies?.map((buddy: any) => (
-          <div key={buddy.id} className="card" data-testid="buddy-card">
+          <div key={buddy.id} className="card flex flex-col h-full" data-testid="buddy-card">
             <div className="flex items-center space-x-3 mb-4">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -187,7 +187,7 @@ export default function BuddiesPage() {
             </div>
 
             {(user?.role === 'HR' || user?.role === 'BUDDY') && (
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 mt-auto">
                 <button 
                   onClick={() => handleCreateMatch(buddy.userId, `${buddy.user.firstName} ${buddy.user.lastName}`)}
                   className="btn-primary flex-1"

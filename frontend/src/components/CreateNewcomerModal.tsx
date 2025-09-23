@@ -219,7 +219,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         value={formData.firstName}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                         placeholder="Enter first name"
                       />
                     </div>
@@ -233,7 +233,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         value={formData.lastName}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                         placeholder="Enter last name"
                       />
                     </div>
@@ -249,7 +249,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      className="input-field mt-1"
                       placeholder="Enter email address"
                     />
                   </div>
@@ -264,7 +264,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         name="department"
                         value={formData.department}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                         placeholder="e.g. Engineering, Marketing"
                       />
                     </div>
@@ -277,7 +277,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         name="position"
                         value={formData.position}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                         placeholder="e.g. Software Engineer, Designer"
                       />
                     </div>
@@ -293,7 +293,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         name="location"
                         value={formData.location}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                         placeholder="e.g. New York, Remote"
                       />
                     </div>
@@ -306,7 +306,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         name="startDate"
                         value={formData.startDate}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        className="input-field mt-1"
                       />
                     </div>
                   </div>
@@ -320,7 +320,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                       value={formData.bio}
                       onChange={handleChange}
                       rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      className="input-field mt-1"
                       placeholder="Additional information about the newcomer..."
                     />
                   </div>

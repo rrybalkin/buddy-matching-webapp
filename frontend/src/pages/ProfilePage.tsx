@@ -244,7 +244,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.department}
                       onChange={(e) => handleInputChange('department', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{profile?.department || 'Not specified'}</p>
@@ -257,7 +257,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.position}
                       onChange={(e) => handleInputChange('position', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{profile?.position || 'Not specified'}</p>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{profile?.location || 'Not specified'}</p>
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         placeholder="e.g., 5550123456"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="input-field mt-1"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         Enter phone number without country code (e.g., 5550123456)
@@ -303,7 +303,7 @@ export default function ProfilePage() {
                     value={formData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
                     rows={3}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="input-field mt-1"
                     placeholder="Tell us about yourself..."
                   />
                 ) : (
@@ -337,7 +337,7 @@ export default function ProfilePage() {
                       <input
                         type="text"
                         placeholder="Add an interest..."
-                        className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault()
@@ -403,7 +403,7 @@ export default function ProfilePage() {
                       <input
                         type="text"
                         placeholder="Add a language..."
-                        className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault()
@@ -456,7 +456,7 @@ export default function ProfilePage() {
                       type="text"
                       value={buddyFormData.unit}
                       onChange={(e) => handleBuddyInputChange('unit', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{buddyProfile?.unit || 'Not specified'}</p>
@@ -468,7 +468,7 @@ export default function ProfilePage() {
                     <select
                       value={buddyFormData.maxBuddies}
                       onChange={(e) => handleBuddyInputChange('maxBuddies', parseInt(e.target.value))}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     >
                       <option value={1}>1</option>
                       <option value={2}>2</option>
@@ -488,7 +488,7 @@ export default function ProfilePage() {
                       value={buddyFormData.experience}
                       onChange={(e) => handleBuddyInputChange('experience', e.target.value)}
                       placeholder="e.g., 5+ years, Senior level"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{buddyProfile?.experience || 'Not specified'}</p>
@@ -502,7 +502,7 @@ export default function ProfilePage() {
                       value={buddyFormData.availability}
                       onChange={(e) => handleBuddyInputChange('availability', e.target.value)}
                       placeholder="e.g., Weekdays 9-5, Flexible"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="input-field mt-1"
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{buddyProfile?.availability || 'Not specified'}</p>
@@ -518,7 +518,7 @@ export default function ProfilePage() {
                     onChange={(e) => handleBuddyInputChange('mentoringStyle', e.target.value)}
                     rows={3}
                     placeholder="Describe your mentoring approach..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="input-field mt-1"
                   />
                 ) : (
                   <p className="mt-1 text-sm text-gray-900">{buddyProfile?.mentoringStyle || 'Not specified'}</p>
@@ -551,7 +551,7 @@ export default function ProfilePage() {
                       <input
                         type="text"
                         placeholder="Add a technology..."
-                        className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault()

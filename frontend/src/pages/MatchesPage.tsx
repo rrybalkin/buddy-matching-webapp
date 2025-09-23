@@ -174,8 +174,23 @@ export default function MatchesPage() {
             )}
             
             {match.message && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700">{match.message}</p>
+              <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-xs font-bold text-blue-600">HR</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h4 className="text-sm font-semibold text-blue-900">Message from HR</h4>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Official
+                      </span>
+                    </div>
+                    <p className="text-sm text-blue-800 leading-relaxed">{match.message}</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

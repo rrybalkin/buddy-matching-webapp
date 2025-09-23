@@ -10,7 +10,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline'
 import { useSocket } from '../contexts/SocketContext'
 import { useQuery } from 'react-query'
@@ -55,7 +56,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
           <div className="flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
+            <div className="flex items-center space-x-2">
+              <HeartIcon className="h-6 w-6 text-primary-600" />
+              <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
+            </div>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-600"
@@ -95,7 +99,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           <div className="flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
+            <div className="flex items-center space-x-2">
+              <HeartIcon className="h-6 w-6 text-primary-600" />
+              <h1 className="text-xl font-bold text-primary-600">BuddyMatch</h1>
+            </div>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
