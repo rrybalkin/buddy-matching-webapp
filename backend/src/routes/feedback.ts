@@ -23,20 +23,26 @@ router.post('/', [
 
     const { matchId, rating, comment, helpfulness, communication, availability } = req.body;
 
-    // Verify user has access to this match and it's completed
+    // HR users cannot submit feedback, only view it
+    if (req.user!.role === 'HR') {
+      return res.status(403).json({ error: 'HR users cannot submit feedback' });
+    }
+
+    // Verify user has access to this match and it's accepted or completed
     const match = await prisma.match.findFirst({
       where: {
         id: matchId,
         OR: [
           { senderId: req.user!.id },
-          { receiverId: req.user!.id }
+          { receiverId: req.user!.id },
+          { newcomerId: req.user!.id }
         ],
-        status: 'COMPLETED'
+        status: { in: ['ACCEPTED', 'COMPLETED'] }
       }
     });
 
     if (!match) {
-      return res.status(404).json({ error: 'Match not found or not completed' });
+      return res.status(404).json({ error: 'Match not found or not eligible for feedback' });
     }
 
     // Check if feedback already exists
@@ -83,7 +89,8 @@ router.get('/match/:matchId', async (req: AuthRequest, res) => {
         id: matchId,
         OR: [
           { senderId: req.user!.id },
-          { receiverId: req.user!.id }
+          { receiverId: req.user!.id },
+          { newcomerId: req.user!.id }
         ]
       }
     });
@@ -116,6 +123,44 @@ router.get('/match/:matchId', async (req: AuthRequest, res) => {
     res.json(feedback);
   } catch (error) {
     console.error('Get feedback error:', error);
+    res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
+// Get all feedback for a match (HR only)
+router.get('/match/:matchId/all', async (req: AuthRequest, res) => {
+  try {
+    if (req.user!.role !== 'HR') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { matchId } = req.params;
+
+    const feedback = await prisma.feedback.findMany({
+      where: { matchId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            profile: {
+              select: {
+                avatar: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(feedback);
+  } catch (error) {
+    console.error('Get all feedback error:', error);
     res.status(500).json({ error: 'Failed to fetch feedback' });
   }
 });

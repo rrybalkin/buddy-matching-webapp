@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
+import FeedbackModal from '../components/FeedbackModal'
+import { ChatBubbleLeftRightIcon, EyeIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 
 // Helper function to format dates for display
 const formatDate = (dateString: string) => {
@@ -17,10 +20,30 @@ const formatDate = (dateString: string) => {
 export default function MatchesPage() {
   const { user } = useAuth()
   const [respondingMatch, setRespondingMatch] = useState<string | null>(null)
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean, matchId: string, partner: string }>({
+    isOpen: false,
+    matchId: '',
+    partner: ''
+  })
+  const [viewingFeedback, setViewingFeedback] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const { data: matches, isLoading } = useQuery('matches', () =>
     api.get('/matches').then(res => res.data)
+  )
+
+  // Get feedback for a specific match
+  const { data: matchFeedback } = useQuery(
+    ['feedback', viewingFeedback],
+    () => api.get(`/feedback/match/${viewingFeedback}`).then(res => res.data),
+    { enabled: !!viewingFeedback }
+  )
+
+  // Get all feedback for HR
+  const { data: allFeedback } = useQuery(
+    ['feedback-all', viewingFeedback],
+    () => api.get(`/feedback/match/${viewingFeedback}/all`).then(res => res.data),
+    { enabled: !!viewingFeedback && user?.role === 'HR' }
   )
 
   // Respond to match mutation
@@ -44,6 +67,67 @@ export default function MatchesPage() {
       console.error('Error responding to match:', error)
       setRespondingMatch(null)
     }
+  }
+
+  const handleOpenFeedback = (matchId: string, partner: string) => {
+    setFeedbackModal({ isOpen: true, matchId, partner })
+  }
+
+  const handleCloseFeedback = () => {
+    setFeedbackModal({ isOpen: false, matchId: '', partner: '' })
+  }
+
+  const handleFeedbackSuccess = () => {
+    queryClient.invalidateQueries('feedback')
+    queryClient.invalidateQueries('matches')
+    // Force immediate refetch of matches to update button state
+    queryClient.refetchQueries('matches')
+  }
+
+  const handleViewFeedback = (matchId: string) => {
+    setViewingFeedback(matchId)
+  }
+
+  const handleCloseViewFeedback = () => {
+    setViewingFeedback(null)
+  }
+
+  // Helper function to check if user can leave feedback
+  const canLeaveFeedback = (match: any) => {
+    // HR users cannot leave feedback, only view it
+    if (user?.role === 'HR') return false
+    
+    if (match.type !== 'NEWCOMER_MATCH') return false
+    if (!['ACCEPTED', 'COMPLETED'].includes(match.status)) return false
+    
+    // Check if user is part of this match
+    const isParticipant = match.senderId === user?.id || 
+                         match.receiverId === user?.id || 
+                         match.newcomerId === user?.id
+    
+    return isParticipant
+  }
+
+  // Helper function to check if user has already submitted feedback
+  const hasSubmittedFeedback = (match: any) => {
+    if (!match.feedback || !Array.isArray(match.feedback)) return false
+    return match.feedback.some((feedback: any) => feedback.userId === user?.id)
+  }
+
+  // Helper function to get partner name for feedback
+  const getPartnerName = (match: any) => {
+    if (match.type === 'NEWCOMER_MATCH' && match.newcomer) {
+      if (match.receiverId === user?.id) {
+        return `${match.newcomer.firstName} ${match.newcomer.lastName}`
+      }
+      if (match.newcomer.id === user?.id) {
+        return `${match.receiver.firstName} ${match.receiver.lastName}`
+      }
+      return `${match.receiver.firstName} ${match.receiver.lastName}`
+    }
+    return match.senderId === user?.id ? 
+      `${match.receiver.firstName} ${match.receiver.lastName}` : 
+      `${match.sender.firstName} ${match.sender.lastName}`
   }
 
   if (isLoading) {
@@ -139,6 +223,36 @@ export default function MatchesPage() {
                       {respondingMatch === match.id ? 'Processing...' : 'Reject'}
                     </button>
                   </div>
+                )}
+                
+                {/* Feedback buttons */}
+                {canLeaveFeedback(match) && !hasSubmittedFeedback(match) && (
+                  <button
+                    onClick={() => handleOpenFeedback(match.id, getPartnerName(match))}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-100 border border-purple-300 rounded-md hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  >
+                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1" />
+                    Leave Feedback
+                  </button>
+                )}
+                
+                {/* Feedback submitted indicator */}
+                {canLeaveFeedback(match) && hasSubmittedFeedback(match) && (
+                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 border border-green-300 rounded-md">
+                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1" />
+                    Feedback Submitted
+                  </span>
+                )}
+                
+                {/* HR View Feedback button */}
+                {user?.role === 'HR' && match.type === 'NEWCOMER_MATCH' && (
+                  <button
+                    onClick={() => handleViewFeedback(match.id)}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <EyeIcon className="h-4 w-4 mr-1" />
+                    View Feedback
+                  </button>
                 )}
               </div>
             </div>
@@ -241,6 +355,120 @@ export default function MatchesPage() {
           <p className="mt-1 text-sm text-gray-500">
             Your buddy matches will appear here once they're created.
           </p>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        onClose={handleCloseFeedback}
+        matchId={feedbackModal.matchId}
+        matchPartner={feedbackModal.partner}
+        onSuccess={handleFeedbackSuccess}
+      />
+
+      {/* View Feedback Modal */}
+      {viewingFeedback && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Feedback for Match
+                </h3>
+                <button
+                  onClick={handleCloseViewFeedback}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {user?.role === 'HR' ? (
+                  // HR sees all feedback
+                  allFeedback?.map((feedback: any) => (
+                    <div key={feedback.id} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-900">
+                          {feedback.user.firstName} {feedback.user.lastName}
+                        </h4>
+                        <span className="text-sm text-gray-500 capitalize">
+                          {feedback.user.role}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <StarIconSolid
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= feedback.rating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">
+                          {feedback.rating}/5
+                        </span>
+                      </div>
+                      {feedback.comment && (
+                        <p className="text-sm text-gray-700">{feedback.comment}</p>
+                      )}
+                      <div className="flex space-x-4 mt-2 text-xs text-gray-500">
+                        {feedback.helpfulness && (
+                          <span>Helpfulness: {feedback.helpfulness}/5</span>
+                        )}
+                        {feedback.communication && (
+                          <span>Communication: {feedback.communication}/5</span>
+                        )}
+                        {feedback.availability && (
+                          <span>Availability: {feedback.availability}/5</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Regular users see only their feedback
+                  matchFeedback?.map((feedback: any) => (
+                    <div key={feedback.id} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <StarIconSolid
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= feedback.rating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">
+                          {feedback.rating}/5
+                        </span>
+                      </div>
+                      {feedback.comment && (
+                        <p className="text-sm text-gray-700">{feedback.comment}</p>
+                      )}
+                      <div className="flex space-x-4 mt-2 text-xs text-gray-500">
+                        {feedback.helpfulness && (
+                          <span>Helpfulness: {feedback.helpfulness}/5</span>
+                        )}
+                        {feedback.communication && (
+                          <span>Communication: {feedback.communication}/5</span>
+                        )}
+                        {feedback.availability && (
+                          <span>Availability: {feedback.availability}/5</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                {(!matchFeedback?.length && !allFeedback?.length) && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No feedback submitted yet.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

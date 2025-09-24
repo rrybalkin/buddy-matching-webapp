@@ -263,6 +263,18 @@ router.get('/', async (req: AuthRequest, res) => {
             senderId: true,
             isRead: true
           }
+        },
+        feedback: {
+          select: {
+            id: true,
+            userId: true,
+            rating: true,
+            comment: true,
+            helpfulness: true,
+            communication: true,
+            availability: true,
+            createdAt: true
+          }
         }
       },
       orderBy: {
