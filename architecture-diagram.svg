@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #1f2937; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #374151; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #4b5563; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #6b7280; }
+      .frontend-box { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+      .backend-box { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; }
+      .database-box { fill: #fef3c7; stroke: #d97706; stroke-width: 2; }
+      .user-box { fill: #f3e8ff; stroke: #8b5cf6; stroke-width: 2; }
+      .arrow { stroke: #6b7280; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .arrow-realtime { stroke: #ef4444; stroke-width: 2; fill: none; marker-end: url(#arrowhead); stroke-dasharray: 5,5; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="title">BuddyMatch Application Architecture</text>
+
+  <!-- Users Section -->
+  <rect x="50" y="80" width="200" height="120" rx="10" class="user-box"/>
+  <text x="150" y="100" text-anchor="middle" class="subtitle">Users</text>
+  <text x="60" y="120" class="text">• HR Manager</text>
+  <text x="60" y="135" class="text">• Buddy (Volunteer)</text>
+  <text x="60" y="150" class="text">• Newcomer</text>
+  <text x="60" y="165" class="text">• Relocated Employee</text>
+  <text x="60" y="180" class="text">• Existing Employee</text>
+
+  <!-- Frontend Section -->
+  <rect x="300" y="80" width="280" height="200" rx="10" class="frontend-box"/>
+  <text x="440" y="100" text-anchor="middle" class="subtitle">Frontend (React + TypeScript)</text>
+  
+  <!-- Frontend Components -->
+  <rect x="320" y="120" width="120" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="380" y="135" text-anchor="middle" class="text">Pages</text>
+  <text x="330" y="150" class="small-text">• Dashboard</text>
+  <text x="330" y="162" class="small-text">• Buddies</text>
+  <text x="330" y="174" class="small-text">• Matches</text>
+
+  <rect x="460" y="120" width="100" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="510" y="135" text-anchor="middle" class="text">Components</text>
+  <text x="470" y="150" class="small-text">• Layout</text>
+  <text x="470" y="162" class="small-text">• Modals</text>
+  <text x="470" y="174" class="small-text">• Forms</text>
+
+  <rect x="320" y="200" width="120" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="380" y="215" text-anchor="middle" class="text">Contexts</text>
+  <text x="330" y="230" class="small-text">• AuthContext</text>
+  <text x="330" y="242" class="small-text">• SocketContext</text>
+
+  <rect x="460" y="200" width="100" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="510" y="215" text-anchor="middle" class="text">Hooks</text>
+  <text x="470" y="230" class="small-text">• useAuth</text>
+  <text x="470" y="242" class="small-text">• useDebounce</text>
+
+  <!-- Backend Section -->
+  <rect x="620" y="80" width="280" height="200" rx="10" class="backend-box"/>
+  <text x="760" y="100" text-anchor="middle" class="subtitle">Backend (Node.js + Express)</text>
+  
+  <!-- Backend Components -->
+  <rect x="640" y="120" width="120" height="60" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="700" y="135" text-anchor="middle" class="text">API Routes</text>
+  <text x="650" y="150" class="small-text">• /api/auth</text>
+  <text x="650" y="162" class="small-text">• /api/buddies</text>
+  <text x="650" y="174" class="small-text">• /api/matches</text>
+
+  <rect x="780" y="120" width="100" height="60" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="830" y="135" text-anchor="middle" class="text">Middleware</text>
+  <text x="790" y="150" class="small-text">• Auth</text>
+  <text x="790" y="162" class="small-text">• Error Handler</text>
+
+  <rect x="640" y="200" width="120" height="60" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="700" y="215" text-anchor="middle" class="text">Socket.io</text>
+  <text x="650" y="230" class="small-text">• Real-time messaging</text>
+  <text x="650" y="242" class="small-text">• Notifications</text>
+
+  <rect x="780" y="200" width="100" height="60" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="830" y="215" text-anchor="middle" class="text">Prisma ORM</text>
+  <text x="790" y="230" class="small-text">• Database queries</text>
+  <text x="790" y="242" class="small-text">• Migrations</text>
+
+  <!-- Database Section -->
+  <rect x="950" y="80" width="200" height="120" rx="10" class="database-box"/>
+  <text x="1050" y="100" text-anchor="middle" class="subtitle">PostgreSQL Database</text>
+  <text x="960" y="120" class="text">• Users &amp; Profiles</text>
+  <text x="960" y="135" class="text">• Buddy Profiles</text>
+  <text x="960" y="150" class="text">• Matches</text>
+  <text x="960" y="165" class="text">• Messages</text>
+  <text x="960" y="180" class="text">• Notifications</text>
+
+  <!-- Real-time Communication -->
+  <rect x="50" y="350" width="1100" height="100" rx="10" fill="#fef2f2" stroke="#ef4444" stroke-width="2"/>
+  <text x="600" y="375" text-anchor="middle" class="subtitle">Real-time Communication (Socket.io)</text>
+  <text x="70" y="395" class="text">• Instant messaging between matched buddies</text>
+  <text x="70" y="410" class="text">• Real-time notifications for match requests</text>
+  <text x="70" y="425" class="text">• Typing indicators in chat</text>
+  <text x="70" y="440" class="text">• Live updates for match status changes</text>
+
+  <!-- Key Features Section -->
+  <rect x="50" y="480" width="1100" height="200" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="600" y="505" text-anchor="middle" class="subtitle">Key Features &amp; Workflows</text>
+  
+  <!-- Feature Columns -->
+  <rect x="70" y="520" width="250" height="140" rx="5" fill="#f1f5f9" stroke="#94a3b8"/>
+  <text x="195" y="540" text-anchor="middle" class="text">HR Workflow</text>
+  <text x="80" y="555" class="small-text">• Create newcomer accounts</text>
+  <text x="80" y="570" class="small-text">• Filter and search buddy profiles</text>
+  <text x="80" y="585" class="small-text">• Create buddy matches</text>
+  <text x="80" y="600" class="small-text">• Monitor buddy distribution</text>
+  <text x="80" y="615" class="small-text">• View feedback and analytics</text>
+
+  <rect x="340" y="520" width="250" height="140" rx="5" fill="#f1f5f9" stroke="#94a3b8"/>
+  <text x="465" y="540" text-anchor="middle" class="text">Buddy Workflow</text>
+  <text x="350" y="555" class="small-text">• Create detailed profiles</text>
+  <text x="350" y="570" class="small-text">• Accept/reject match requests</text>
+  <text x="350" y="585" class="small-text">• Manage availability</text>
+  <text x="350" y="600" class="small-text">• Chat with newcomers</text>
+  <text x="350" y="615" class="small-text">• Provide feedback</text>
+
+  <rect x="610" y="520" width="250" height="140" rx="5" fill="#f1f5f9" stroke="#94a3b8"/>
+  <text x="735" y="540" text-anchor="middle" class="text">Newcomer Workflow</text>
+  <text x="620" y="555" class="small-text">• View assigned buddy info</text>
+  <text x="620" y="570" class="small-text">• Chat with buddy</text>
+  <text x="620" y="585" class="small-text">• Provide feedback</text>
+  <text x="620" y="600" class="small-text">• Update profile</text>
+
+  <rect x="880" y="520" width="250" height="140" rx="5" fill="#f1f5f9" stroke="#94a3b8"/>
+  <text x="1005" y="540" text-anchor="middle" class="text">Additional Features</text>
+  <text x="890" y="555" class="small-text">• Relocation support</text>
+  <text x="890" y="570" class="small-text">• Office connections</text>
+  <text x="890" y="585" class="small-text">• Role-based access</text>
+  <text x="890" y="600" class="small-text">• JWT authentication</text>
+  <text x="890" y="615" class="small-text">• Docker deployment</text>
+
+  <!-- Arrows showing data flow -->
+  <!-- User to Frontend -->
+  <line x1="250" y1="140" x2="300" y2="140" class="arrow"/>
+  <text x="270" y="135" text-anchor="middle" class="small-text">HTTP/HTTPS</text>
+
+  <!-- Frontend to Backend -->
+  <line x1="580" y1="180" x2="620" y2="180" class="arrow"/>
+  <text x="595" y="175" text-anchor="middle" class="small-text">REST API</text>
+
+  <!-- Backend to Database -->
+  <line x1="900" y1="140" x2="950" y2="140" class="arrow"/>
+  <text x="920" y="135" text-anchor="middle" class="small-text">Prisma ORM</text>
+
+  <!-- Real-time arrows -->
+  <line x1="440" y1="280" x2="700" y2="280" class="arrow-realtime"/>
+  <text x="560" y="275" text-anchor="middle" class="small-text">WebSocket</text>
+
+  <!-- Technology Stack -->
+  <rect x="50" y="700" width="1100" height="80" rx="10" fill="#f9fafb" stroke="#d1d5db" stroke-width="1"/>
+  <text x="600" y="725" text-anchor="middle" class="subtitle">Technology Stack</text>
+  <text x="70" y="745" class="text">Frontend: React 18 + TypeScript + Vite + Tailwind CSS + React Query v3</text>
+  <text x="70" y="760" class="text">Backend: Node.js + Express + TypeScript + Prisma + PostgreSQL + Socket.io</text>
+  <text x="70" y="775" class="text">Deployment: Docker + Docker Compose | Testing: Jest + Playwright + Supertest</text>
+
+</svg>

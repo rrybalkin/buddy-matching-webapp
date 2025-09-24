@@ -31,6 +31,12 @@ A comprehensive web application designed to help HR and veteran employees coordi
 - **Testing**: Jest + Playwright + Supertest
 - **Deployment**: Docker + Docker Compose
 
+### Architecture Diagram
+
+![BuddyMatch Architecture](architecture-diagram.svg)
+
+*This diagram shows the overall application architecture, including the frontend React components, backend API structure, database schema, real-time communication, and key user workflows.*
+
 ### Project Structure
 ```
 BuddyMatch/
