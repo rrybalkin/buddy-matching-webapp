@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
-import { XMarkIcon, EnvelopeIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, EnvelopeIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline'
 
 interface CreateNewcomerModalProps {
   isOpen: boolean
@@ -24,6 +24,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
   const [tempPassword, setTempPassword] = useState('')
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [isPasswordCopied, setIsPasswordCopied] = useState(false)
 
   const queryClient = useQueryClient()
 
@@ -35,6 +36,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
         queryClient.invalidateQueries('newcomers')
         setTempPassword(response.data.tempPassword)
         setShowTempPassword(true)
+        setIsPasswordCopied(false)
         // Don't auto-close anymore - wait for user action
       }
     }
@@ -81,6 +83,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
       setShowTempPassword(false)
       setTempPassword('')
       setEmailSent(false)
+      setIsPasswordCopied(false)
       onClose()
     }
   }
@@ -88,7 +91,11 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
   const handleCopyPassword = async () => {
     try {
       await navigator.clipboard.writeText(tempPassword)
-      alert('Password copied to clipboard!')
+      setIsPasswordCopied(true)
+      // Revert back to "Copy" after 2 seconds
+      setTimeout(() => {
+        setIsPasswordCopied(false)
+      }, 2000)
     } catch (err) {
       console.error('Failed to copy password:', err)
       alert('Failed to copy password. Please copy it manually.')
@@ -127,7 +134,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {showTempPassword ? 'Newcomer Created Successfully!' : 'Create New Newcomer Account'}
+                  {showTempPassword ? 'Newcomer Created Successfully' : 'Create New Newcomer Account'}
                 </h3>
                 <button
                   type="button"
@@ -147,7 +154,7 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Newcomer Account Created!</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Newcomer Account Created</h3>
                     <p className="text-sm text-gray-500 mb-4">
                       Account has been created for <strong>{formData.firstName} {formData.lastName}</strong>
                     </p>
@@ -161,10 +168,23 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                       <button
                         type="button"
                         onClick={handleCopyPassword}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800"
+                        className={`inline-flex items-center px-2 py-1 text-xs font-medium transition-colors duration-200 ${
+                          isPasswordCopied 
+                            ? 'text-green-600 hover:text-green-700' 
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
                       >
-                        <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
-                        Copy
+                        {isPasswordCopied ? (
+                          <>
+                            <CheckIcon className="h-4 w-4 mr-1" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
+                            Copy
+                          </>
+                        )}
                       </button>
                     </div>
                     <div className="bg-white p-3 rounded border font-mono text-lg font-bold text-gray-900 break-all">
@@ -175,11 +195,11 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                     </p>
                   </div>
 
-                  <div className="border-t pt-4">
+                  <div className="border-t pt-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-gray-900">Send Welcome Email</h4>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 mt-1">
                           Send login credentials and welcome information to {formData.email}
                         </p>
                       </div>

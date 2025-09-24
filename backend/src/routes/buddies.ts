@@ -341,4 +341,49 @@ router.get('/dashboard', requireRole(['HR']), async (req: AuthRequest, res) => {
   }
 });
 
+// Get buddy match distribution (HR only)
+router.get('/match-distribution', requireRole(['HR']), async (req: AuthRequest, res) => {
+  try {
+    // Get all buddies with their match counts
+    const buddies = await prisma.buddyProfile.findMany({
+      select: {
+        userId: true
+      }
+    });
+
+    // Get match count for each buddy
+    const buddyMatchCounts = await Promise.all(
+      buddies.map(async (buddy) => {
+        const matchCount = await prisma.match.count({
+          where: {
+            receiverId: buddy.userId,
+            status: 'ACCEPTED'
+          }
+        });
+        return matchCount;
+      })
+    );
+
+    // Count how many buddies have each number of matches
+    const distribution: { [key: number]: number } = {};
+    buddyMatchCounts.forEach(count => {
+      distribution[count] = (distribution[count] || 0) + 1;
+    });
+
+    // Convert to array format for the chart
+    const chartData = Object.entries(distribution)
+      .map(([matchCount, buddyCount]) => ({
+        name: `${matchCount} ${matchCount === '1' ? 'Match' : 'Matches'}`,
+        value: buddyCount,
+        matchCount: parseInt(matchCount)
+      }))
+      .sort((a, b) => a.matchCount - b.matchCount);
+
+    res.json(chartData);
+  } catch (error) {
+    console.error('Get buddy match distribution error:', error);
+    res.status(500).json({ error: 'Failed to fetch buddy match distribution' });
+  }
+});
+
 export default router;

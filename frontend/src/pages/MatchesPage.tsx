@@ -288,14 +288,12 @@ export default function MatchesPage() {
                       <span className="ml-2 text-blue-700">{match.newcomer.profile.location}</span>
                     </div>
                   )}
-                  <div>
-                    <span className="font-medium text-blue-800">Start Date:</span>
-                    <span className="ml-2 text-blue-700">{formatDate(match.startDate)}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-blue-800">End Date:</span>
-                    <span className="ml-2 text-blue-700">{formatDate(match.endDate)}</span>
-                  </div>
+                  {match.newcomer.profile?.startDate && (
+                    <div>
+                      <span className="font-medium text-blue-800">Start Date:</span>
+                      <span className="ml-2 text-blue-700">{formatDate(match.newcomer.profile.startDate)}</span>
+                    </div>
+                  )}
                 </div>
                 {match.newcomer.profile?.bio && (
                   <div className="mt-2">

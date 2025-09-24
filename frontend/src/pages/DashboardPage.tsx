@@ -39,6 +39,12 @@ export default function DashboardPage() {
     { enabled: user?.role === 'HR', retry: 1 }
   )
 
+  const { data: buddyMatchDistribution, error: buddyMatchDistributionError, isLoading: buddyMatchDistributionLoading } = useQuery(
+    'buddy-match-distribution',
+    () => api.get('/buddies/match-distribution').then(res => res.data),
+    { enabled: user?.role === 'HR', retry: 1 }
+  )
+
   const { data: newcomers, error: newcomersError, isLoading: newcomersLoading } = useQuery(
     'newcomers-dashboard',
     () => api.get('/users/newcomers').then(res => res.data),
@@ -191,6 +197,65 @@ export default function DashboardPage() {
                   <div>
                     <div className="text-2xl font-bold text-red-600">{unassignedNewcomers}</div>
                     <div className="text-sm text-gray-500">Without Buddies</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Buddy Match Distribution Chart */}
+            {buddyMatchDistribution && buddyMatchDistribution.length > 0 && (
+              <div className="card">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Buddy Match Distribution</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={buddyMatchDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {buddyMatchDistribution.map((entry: any, index: number) => {
+                          // Generate colors based on match count
+                          const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
+                          return (
+                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                          );
+                        })}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: any) => [value, 'Buddies']}
+                        labelFormatter={(label: string) => `Matches: ${label}`}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value: string) => (
+                          <span style={{ color: '#374151', fontSize: '14px' }}>
+                            {value}
+                          </span>
+                        )}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {buddyMatchDistribution.find((item: any) => item.matchCount === 0)?.value || 0}
+                    </div>
+                    <div className="text-sm text-gray-500">0 Matches</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {buddyMatchDistribution.reduce((sum: number, item: any) => 
+                        item.matchCount > 0 ? sum + item.value : sum, 0
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">With Matches</div>
                   </div>
                 </div>
               </div>
@@ -399,7 +464,7 @@ export default function DashboardPage() {
   }
 
   // Show loading state
-  if (matchesLoading || (user?.role === 'HR' && (buddyStatsLoading || newcomersLoading))) {
+  if (matchesLoading || (user?.role === 'HR' && (buddyStatsLoading || newcomersLoading || buddyMatchDistributionLoading))) {
     return (
       <div className="space-y-6">
         <div>
@@ -418,7 +483,7 @@ export default function DashboardPage() {
   }
 
   // Show error state if there are critical errors
-  if (matchesError || (user?.role === 'HR' && (buddyStatsError || newcomersError))) {
+  if (matchesError || (user?.role === 'HR' && (buddyStatsError || newcomersError || buddyMatchDistributionError))) {
     return (
       <div className="space-y-6">
         <div>

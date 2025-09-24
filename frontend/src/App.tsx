@@ -19,6 +19,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import Layout from './components/Layout'
 import LoadingSpinner from './components/LoadingSpinner'
 
+
 function AppRoutes() {
   const { user, loading } = useAuth()
 
