@@ -13,6 +13,17 @@ import {
 } from '@heroicons/react/24/outline'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
+// Helper function to format dates for display
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Not set'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
 export default function DashboardPage() {
   const { user } = useAuth()
 
@@ -263,6 +274,9 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-500 capitalize">
                           {match.type.replace('_', ' ').toLowerCase()}
                         </p>
+                        <p className="text-xs text-gray-400">
+                          {formatDate(match.startDate)} - {formatDate(match.endDate)}
+                        </p>
                       </div>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         match.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
@@ -341,6 +355,9 @@ export default function DashboardPage() {
                         </p>
                         <p className="text-sm text-gray-500 capitalize">
                           {match.type.replace('_', ' ').toLowerCase()}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {formatDate(match.startDate)} - {formatDate(match.endDate)}
                         </p>
                         {match.receiver.profile?.department && (
                           <p className="text-xs text-gray-400">

@@ -3,6 +3,17 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 
+// Helper function to format dates for display
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Not set'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
 export default function MatchesPage() {
   const { user } = useAuth()
   const [respondingMatch, setRespondingMatch] = useState<string | null>(null)
@@ -163,6 +174,14 @@ export default function MatchesPage() {
                       <span className="ml-2 text-blue-700">{match.newcomer.profile.location}</span>
                     </div>
                   )}
+                  <div>
+                    <span className="font-medium text-blue-800">Start Date:</span>
+                    <span className="ml-2 text-blue-700">{formatDate(match.startDate)}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-blue-800">End Date:</span>
+                    <span className="ml-2 text-blue-700">{formatDate(match.endDate)}</span>
+                  </div>
                 </div>
                 {match.newcomer.profile?.bio && (
                   <div className="mt-2">
@@ -173,19 +192,38 @@ export default function MatchesPage() {
               </div>
             )}
             
+            {/* Match Duration Information - for all match types */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Match Duration</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Start Date:</span>
+                  <span className="ml-2 text-gray-600">{formatDate(match.startDate)}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">End Date:</span>
+                  <span className="ml-2 text-gray-600">{formatDate(match.endDate)}</span>
+                </div>
+              </div>
+            </div>
+            
             {match.message && (
               <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
                 <div className="flex items-start space-x-2">
                   <div className="flex-shrink-0">
                     <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-xs font-bold text-blue-600">HR</span>
+                      <span className="text-xs font-bold text-blue-600">
+                        {match.type === 'NEWCOMER_MATCH' ? 'HR' : 'B'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="text-sm font-semibold text-blue-900">Message from HR</h4>
+                      <h4 className="text-sm font-semibold text-blue-900">
+                        {match.type === 'NEWCOMER_MATCH' ? 'Message from HR' : 'Message from Buddy'}
+                      </h4>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Official
+                        {match.type === 'NEWCOMER_MATCH' ? 'Official' : 'Personal'}
                       </span>
                     </div>
                     <p className="text-sm text-blue-800 leading-relaxed">{match.message}</p>

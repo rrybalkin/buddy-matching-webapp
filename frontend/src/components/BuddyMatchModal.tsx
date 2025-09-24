@@ -1,7 +1,21 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
+import React, { useState, useEffect } from 'react'
+import { useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+
+// Helper function to get default dates
+const getDefaultDates = () => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  const endDate = new Date(tomorrow)
+  endDate.setMonth(endDate.getMonth() + 3)
+  
+  return {
+    startDate: tomorrow.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0]
+  }
+}
 
 interface BuddyMatchModalProps {
   isOpen: boolean
@@ -11,15 +25,28 @@ interface BuddyMatchModalProps {
 }
 
 export default function BuddyMatchModal({ isOpen, onClose, selectedBuddyId, selectedBuddyName }: BuddyMatchModalProps) {
+  const defaultDates = getDefaultDates()
   const [formData, setFormData] = useState({
     type: 'RELOCATION_SUPPORT',
     message: '',
-    startDate: '',
-    endDate: ''
+    startDate: defaultDates.startDate,
+    endDate: defaultDates.endDate
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const queryClient = useQueryClient()
+
+  // Reset form data with default dates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const defaultDates = getDefaultDates()
+      setFormData(prev => ({
+        ...prev,
+        startDate: defaultDates.startDate,
+        endDate: defaultDates.endDate
+      }))
+    }
+  }, [isOpen])
 
   // Create match mutation
   const createMatchMutation = useMutation(
@@ -30,11 +57,12 @@ export default function BuddyMatchModal({ isOpen, onClose, selectedBuddyId, sele
         queryClient.invalidateQueries('notifications')
         queryClient.invalidateQueries('buddies')
         onClose()
+        const defaultDates = getDefaultDates()
         setFormData({
           type: 'RELOCATION_SUPPORT',
           message: '',
-          startDate: '',
-          endDate: ''
+          startDate: defaultDates.startDate,
+          endDate: defaultDates.endDate
         })
       }
     }
@@ -43,6 +71,23 @@ export default function BuddyMatchModal({ isOpen, onClose, selectedBuddyId, sele
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Validate required date fields
+    if (!formData.startDate) {
+      alert('Please select a start date.')
+      return
+    }
+
+    if (!formData.endDate) {
+      alert('Please select an end date.')
+      return
+    }
+
+    // Validate that end date is after start date
+    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+      alert('End date must be after start date.')
+      return
+    }
+    
     setIsSubmitting(true)
 
     try {
@@ -50,8 +95,8 @@ export default function BuddyMatchModal({ isOpen, onClose, selectedBuddyId, sele
         receiverId: selectedBuddyId,
         type: formData.type,
         message: formData.message || `Hi ${selectedBuddyName}, I'd like to connect with you for ${formData.type.replace('_', ' ').toLowerCase()}.`,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined
+        startDate: formData.startDate,
+        endDate: formData.endDate
       })
     } catch (error) {
       console.error('Error creating match:', error)
@@ -131,26 +176,28 @@ export default function BuddyMatchModal({ isOpen, onClose, selectedBuddyId, sele
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Start Date (Optional)
+                      Start Date *
                     </label>
                     <input
                       type="date"
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleChange}
+                      required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      End Date (Optional)
+                      End Date *
                     </label>
                     <input
                       type="date"
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleChange}
+                      required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                     />
                   </div>

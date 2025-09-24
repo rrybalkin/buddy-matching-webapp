@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
@@ -13,19 +13,46 @@ interface CreateMatchModalProps {
   newcomerName?: string
 }
 
+// Helper function to get default dates
+const getDefaultDates = () => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  const endDate = new Date(tomorrow)
+  endDate.setMonth(endDate.getMonth() + 3)
+  
+  return {
+    startDate: tomorrow.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0]
+  }
+}
+
 export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, newcomerId, newcomerName }: CreateMatchModalProps) {
   const { user } = useAuth()
+  const defaultDates = getDefaultDates()
   const [formData, setFormData] = useState({
     type: 'NEWCOMER_MATCH',
     newcomerId: newcomerId || '',
     selectedBuddyId: buddyId || '',
     message: '',
-    startDate: '',
-    endDate: ''
+    startDate: defaultDates.startDate,
+    endDate: defaultDates.endDate
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const queryClient = useQueryClient()
+
+  // Reset form data with default dates when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const defaultDates = getDefaultDates()
+      setFormData(prev => ({
+        ...prev,
+        startDate: defaultDates.startDate,
+        endDate: defaultDates.endDate
+      }))
+    }
+  }, [isOpen])
 
   // Get available match types based on user role
   const getAvailableMatchTypes = () => {
@@ -67,13 +94,14 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
         queryClient.invalidateQueries('newcomers')
         queryClient.invalidateQueries('buddies')
         onClose()
+        const defaultDates = getDefaultDates()
         setFormData({
           type: 'NEWCOMER_MATCH',
           newcomerId: '',
           selectedBuddyId: '',
           message: '',
-          startDate: '',
-          endDate: ''
+          startDate: defaultDates.startDate,
+          endDate: defaultDates.endDate
         })
       }
     }
@@ -97,6 +125,23 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
       alert('Please select a buddy to connect with.')
       return
     }
+
+    // Validate required date fields
+    if (!formData.startDate) {
+      alert('Please select a start date.')
+      return
+    }
+
+    if (!formData.endDate) {
+      alert('Please select an end date.')
+      return
+    }
+
+    // Validate that end date is after start date
+    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+      alert('End date must be after start date.')
+      return
+    }
     
     setIsSubmitting(true)
 
@@ -113,8 +158,8 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
         message: formData.message || (user?.role === 'HR' ? 
           `Welcome to the team! ${selectedBuddyName} will be your buddy.` :
           `Hi ${selectedBuddyName}, I'd like to connect with you for ${formData.type.replace('_', ' ').toLowerCase()}.`),
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined
+        startDate: formData.startDate,
+        endDate: formData.endDate
       }
 
       // Only include newcomerId for HR-created matches
@@ -330,26 +375,28 @@ export default function CreateMatchModal({ isOpen, onClose, buddyId, buddyName, 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Start Date (Optional)
+                      Start Date *
                     </label>
                     <input
                       type="date"
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleChange}
+                      required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      End Date (Optional)
+                      End Date *
                     </label>
                     <input
                       type="date"
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleChange}
+                      required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                     />
                   </div>

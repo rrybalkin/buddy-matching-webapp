@@ -624,9 +624,15 @@ export default function ProfilePage() {
                     </label>
                   </div>
                 ) : (
-                  <p className="mt-1 text-sm text-gray-900">
-                    {buddyProfile?.isAvailable ? 'Available for new buddies' : 'Not available for new buddies'}
-                  </p>
+                  <div className="mt-1 flex items-center">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      buddyProfile?.isAvailable 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {buddyProfile?.isAvailable ? 'Available' : 'Not Available'}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
