@@ -1,6 +1,0 @@
-📋 Test Accounts:
-HR: hr@company.com / password123
-Buddy: john.doe@company.com / password123
-Newcomer: alex.newcomer@company.com / password123
-Relocated: relocated@company.com / password123
-Existing: existing@company.com / password123

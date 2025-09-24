@@ -23,11 +23,12 @@ A comprehensive web application designed to help HR and veteran employees coordi
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + React Query
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + React Query v3
 - **Backend**: Node.js + Express + TypeScript + Prisma + PostgreSQL
-- **Authentication**: JWT + bcrypt
+- **Authentication**: JWT + bcryptjs
 - **Real-time**: Socket.io for messaging
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: PostgreSQL 15 with Prisma ORM
+- **Testing**: Jest + Playwright + Supertest
 - **Deployment**: Docker + Docker Compose
 
 ### Project Structure
@@ -38,8 +39,10 @@ BuddyMatch/
 │   │   ├── routes/         # API route handlers
 │   │   ├── middleware/     # Authentication & error handling
 │   │   ├── socket/         # Socket.io real-time handlers
+│   │   ├── __tests__/      # Backend tests
 │   │   └── index.ts        # Server entry point
 │   ├── prisma/             # Database schema & migrations
+│   ├── Dockerfile          # Backend Docker image
 │   └── package.json
 ├── frontend/               # React application
 │   ├── src/
@@ -47,10 +50,17 @@ BuddyMatch/
 │   │   ├── pages/          # Page components
 │   │   ├── contexts/       # React contexts
 │   │   ├── hooks/          # Custom hooks
-│   │   └── lib/            # Utilities & API client
+│   │   ├── lib/            # Utilities & API client
+│   │   └── tests/          # Frontend tests
+│   ├── public/             # Static assets
+│   ├── Dockerfile          # Frontend Docker image
 │   └── package.json
-├── docker-compose.yml      # Development environment
-├── Dockerfile             # Production build
+├── docs/                   # Documentation and user stories
+├── docker-compose.yml      # Main development environment
+├── docker-compose.dev.yml  # Development with hot reload
+├── docker-compose.prod.yml # Production environment
+├── env.example            # Environment variables template
+├── test-users.txt         # Test account credentials
 └── README.md
 ```
 
@@ -122,15 +132,14 @@ BuddyMatch/
 
 ## 🧪 Test Accounts
 
-The application comes with pre-seeded test accounts:
+The application comes with pre-seeded test accounts for development and testing purposes. Please refer to the `test-users.txt` file for the complete list of test accounts and their credentials.
 
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
-| HR | hr@company.com | password123 | HR Manager with full access |
-| Buddy | john.doe@company.com | password123 | Senior Software Engineer |
-| Buddy | jane.smith@company.com | password123 | Product Manager |
-| Buddy | mike.wilson@company.com | password123 | UX Designer |
-| Newcomer | alex.newcomer@company.com | password123 | Junior Developer |
+**⚠️ Security Note**: The `test-users.txt` file contains sensitive credentials and should be:
+- Added to `.gitignore` before pushing to a public repository
+- Removed or secured in production environments
+- Never committed to version control in production codebases
+
+**Note**: These are development-only accounts. Change all default passwords before deploying to production.
 
 ## 📱 User Roles & Features
 
@@ -235,7 +244,13 @@ npx prisma migrate deploy
 
 ### Environment Variables
 
-Create a `.env` file with the following variables:
+Create a `.env` file based on the `env.example` template:
+
+```bash
+cp env.example .env
+```
+
+Then edit the `.env` file with your production values:
 
 ```env
 # Database
@@ -244,7 +259,7 @@ DATABASE_URL="postgresql://username:password@localhost:5432/buddymatch"
 # Redis
 REDIS_URL="redis://localhost:6379"
 
-# JWT
+# JWT (CHANGE THIS IN PRODUCTION!)
 JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 
 # Environment
@@ -254,23 +269,40 @@ NODE_ENV="production"
 VITE_API_URL="https://your-api-domain.com"
 ```
 
+**Important**: Always use strong, unique values for production deployments, especially for `JWT_SECRET` and database credentials.
+
 ## 📊 API Documentation
 
 ### Authentication Endpoints
-- `POST /api/auth/register` - User registration
+- `POST /api/auth/register` - User registration (BUDDY role only)
 - `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
+- `GET /api/auth/me` - Get current user profile
+- `PUT /api/auth/change-password` - Change user password
+
+### User Management
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update user profile
+- `GET /api/users` - List all users (with filters)
+- `PATCH /api/users/:id/status` - Update user status
+- `GET /api/users/newcomers` - Get newcomers list (HR only)
+- `POST /api/users/newcomers` - Create newcomer account (HR only)
+- `GET /api/users/newcomers/:id/matches` - Get newcomer matches (HR only)
+- `PATCH /api/users/newcomers/:id` - Update newcomer profile (HR only)
 
 ### Buddy Management
+- `GET /api/buddies/me` - Get current user's buddy profile
 - `GET /api/buddies` - List buddy profiles with filters
 - `POST /api/buddies` - Create buddy profile
+- `PUT /api/buddies/me` - Update own buddy profile
 - `PUT /api/buddies/:id` - Update buddy profile
 - `GET /api/buddies/dashboard` - HR buddy load dashboard
 
 ### Match Management
-- `POST /api/matches` - Create buddy match (HR only)
+- `POST /api/matches` - Create buddy match (HR and BUDDY roles)
 - `GET /api/matches` - Get user's matches
-- `PATCH /api/matches/:id/respond` - Accept/reject match
+- `PATCH /api/matches/:id/respond` - Accept/reject match (BUDDY only)
+- `GET /api/matches/:id/messages` - Get match messages
+- `POST /api/matches/:id/messages` - Send message in match
 
 ### Messaging
 - `GET /api/messages/match/:matchId` - Get match messages
@@ -280,7 +312,20 @@ VITE_API_URL="https://your-api-domain.com"
 ### Feedback
 - `POST /api/feedback` - Submit match feedback
 - `GET /api/feedback/match/:matchId` - Get match feedback
+- `GET /api/feedback/match/:matchId/all` - Get all feedback for match
 - `GET /api/feedback/stats` - Feedback statistics (HR only)
+
+### Notifications
+- `GET /api/notifications` - Get user notifications
+- `PATCH /api/notifications/:id/read` - Mark notification as read
+- `PATCH /api/notifications/read-all` - Mark all notifications as read
+- `GET /api/notifications/unread-count` - Get unread notification count
+
+### Requests
+- `POST /api/requests` - Create support request (RELOCATION_SUPPORT, OFFICE_CONNECTION)
+- `GET /api/requests/my-requests` - Get user's requests
+- `GET /api/requests` - Get all requests (HR only)
+- `PATCH /api/requests/:id/status` - Update request status (HR only)
 
 ## 🤝 Contributing
 
