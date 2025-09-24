@@ -48,12 +48,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
-    const { user, token } = response.data
-    
-    localStorage.setItem('token', token)
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    setUser(user)
+    try {
+      const response = await api.post('/auth/login', { email, password })
+      const { user, token } = response.data
+      
+      localStorage.setItem('token', token)
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      setUser(user)
+    } catch (error) {
+      // Re-throw the error so it can be handled by the component
+      throw error
+    }
   }
 
   const register = async (userData: any) => {
