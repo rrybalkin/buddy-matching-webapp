@@ -157,24 +157,21 @@ The application comes with pre-seeded test accounts for development and testing 
 - Manage user accounts
 
 ### Buddy (Volunteer)
-- Create detailed buddy profiles
-- Accept/reject match requests
-- Manage availability and capacity
-- Chat with matched newcomers
-- Provide feedback
+- Create detailed buddy profiles with location, tech stack, and interests
+- Accept/reject match requests from HR and other employees
+- Manage availability and capacity (max buddies limit)
+- Chat with matched newcomers and other employees
+- Help newcomers settle into the company
+- Support relocated employees with relocation needs
+- Connect with existing employees seeking office connections
+- Provide guidance and support through different request types
+- Provide feedback on matches and interactions
 
 ### Newcomer
 - View assigned buddy information
 - Chat with assigned buddy
 - Provide feedback after match period
 - Update profile information
-
-### Buddy (Volunteer)
-- Help newcomers settle into the company
-- Support relocated employees with relocation needs
-- Connect with existing employees seeking office connections
-- Manage availability and capacity
-- Provide guidance and support through different request types
 
 ## 🔧 Development
 
