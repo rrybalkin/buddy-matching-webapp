@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [buddyFormData, setBuddyFormData] = useState({
     unit: '',
     techStack: [] as string[],
+    interests: [] as string[],
     maxBuddies: 3,
     experience: '',
     mentoringStyle: '',
@@ -110,6 +111,7 @@ export default function ProfilePage() {
       setBuddyFormData({
         unit: buddyProfile.unit || '',
         techStack: buddyProfile.techStack || [],
+        interests: buddyProfile.interests || [],
         maxBuddies: buddyProfile.maxBuddies || 3,
         experience: buddyProfile.experience || '',
         mentoringStyle: buddyProfile.mentoringStyle || '',
@@ -145,7 +147,7 @@ export default function ProfilePage() {
 
   const handleArrayAdd = (field: 'interests' | 'languages' | 'techStack', value: string) => {
     if (value.trim()) {
-      if (field === 'techStack') {
+      if (field === 'techStack' || field === 'interests') {
         setBuddyFormData(prev => ({
           ...prev,
           [field]: [...prev[field], value.trim()]
@@ -160,7 +162,7 @@ export default function ProfilePage() {
   }
 
   const handleArrayRemove = (field: 'interests' | 'languages' | 'techStack', index: number) => {
-    if (field === 'techStack') {
+    if (field === 'techStack' || field === 'interests') {
       setBuddyFormData(prev => ({
         ...prev,
         [field]: prev[field].filter((_, i) => i !== index)
@@ -331,7 +333,7 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <div className="mt-1">
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {formData.interests.map((interest, index) => (
+                      {(user?.role === 'BUDDY' ? buddyFormData.interests : formData.interests).map((interest, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
@@ -375,18 +377,21 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {profile?.interests && profile.interests.length > 0 ? (
-                      profile.interests.map((interest, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-                        >
-                          {interest}
-                        </span>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500">No interests specified</p>
-                    )}
+                    {(() => {
+                      const interests = user?.role === 'BUDDY' ? buddyProfile?.interests : profile?.interests;
+                      return interests && interests.length > 0 ? (
+                        interests.map((interest, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                          >
+                            {interest}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No interests specified</p>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

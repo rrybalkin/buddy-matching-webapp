@@ -31,7 +31,17 @@ router.get('/profile', async (req: AuthRequest, res) => {
 
 // Update user profile
 router.put('/profile', [
-  body('phone').optional().isMobilePhone('any'),
+  body('phone').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) {
+      return true; // Allow empty values
+    }
+    // Use a simple regex for phone validation instead of isMobilePhone
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(value)) {
+      throw new Error('Invalid phone number format');
+    }
+    return true;
+  }),
   body('bio').optional().isLength({ max: 500 }),
   body('location').optional().trim(),
   body('department').optional().trim(),
