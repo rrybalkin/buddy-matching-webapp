@@ -13,6 +13,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Local environment file for secrets
+.env.local
+
 # Database
 *.db
 *.sqlite

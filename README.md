@@ -87,19 +87,32 @@ BuddyMatch/
    cd BuddyMatch
    ```
 
-2. **Start the development environment**
+2. **Set up environment variables (for real API keys)**
    ```bash
-   docker-compose -f docker-compose.dev.yml up -d
+   # Copy the example file
+   cp env.example .env.local
+   
+   # Edit .env.local with your real API keys and configuration
+   # Replace OPENAI_API_KEY with your actual key
    ```
 
-3. **Set up the database**
+3. **Start the development environment**
+   ```bash
+   # Using .env.local file (recommended for real API keys)
+   docker-compose -f docker-compose.dev.yml up -d
+   
+   # OR using default .env file
+   docker-compose -f docker-compose.dev.yml --env-file .env up -d
+   ```
+
+4. **Set up the database**
    ```bash
    # Wait for services to start, then run:
    docker-compose -f docker-compose.dev.yml exec backend npm run db:setup
    docker-compose -f docker-compose.dev.yml exec backend npm run db:seed
    ```
 
-4. **Access the application**
+5. **Access the application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
    - Database: localhost:5432
@@ -115,6 +128,11 @@ BuddyMatch/
 
 2. **Set up environment variables**
    ```bash
+   # For development with real API keys (recommended)
+   cp env.example .env.local
+   # Edit .env.local with your real configuration (API keys, etc.)
+   
+   # OR for basic development
    cp env.example .env
    # Edit .env with your configuration
    ```
@@ -135,8 +153,49 @@ BuddyMatch/
 5. **Start development servers**
    ```bash
    # From project root
+   # Using .env.local file (recommended for real API keys)
+   npm run dev:local
+   
+   # OR using .env file
    npm run dev
    ```
+
+## 🔐 Environment Configuration
+
+### Using .env.local for Development
+
+For local development with real API keys and sensitive data, use the `.env.local` file:
+
+1. **Copy the example file:**
+   ```bash
+   cp env.example .env.local
+   ```
+
+2. **Edit `.env.local` with your real values:**
+   ```bash
+   # Replace with your actual OpenAI API key
+   OPENAI_API_KEY="sk-your-real-openai-api-key-here"
+   
+   # Update other sensitive values as needed
+   JWT_SECRET="your-super-secret-jwt-key"
+   ```
+
+3. **Start the backend with local environment:**
+   ```bash
+   cd backend
+   npm run dev:local
+   ```
+
+4. **For Docker Compose development:**
+   ```bash
+   # Docker Compose automatically uses .env.local if it exists
+   docker-compose -f docker-compose.dev.yml up -d
+   
+   # OR explicitly specify the env file
+   docker-compose -f docker-compose.dev.yml --env-file .env.local up -d
+   ```
+
+**Note:** The `.env.local` file is automatically ignored by git and should contain your real API keys and sensitive configuration.
 
 ## 🧪 Test Accounts
 
@@ -195,6 +254,10 @@ npm run db:migrate
 npm run db:seed
 
 # Start development server
+# Using .env.local file (recommended for real API keys)
+npm run dev:local
+
+# OR using .env file
 npm run dev
 
 # Open Prisma Studio

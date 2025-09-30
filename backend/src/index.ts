@@ -14,6 +14,7 @@ import messageRoutes from './routes/messages';
 import feedbackRoutes from './routes/feedback';
 import requestRoutes from './routes/requests';
 import notificationRoutes from './routes/notifications';
+import aiMatchingRoutes from './routes/aiMatching';
 
 import { errorHandler } from './middleware/errorHandler';
 import { authenticateToken } from './middleware/auth';
@@ -63,6 +64,7 @@ app.use('/api/messages', authenticateToken, messageRoutes);
 app.use('/api/feedback', authenticateToken, feedbackRoutes);
 app.use('/api/requests', authenticateToken, requestRoutes);
 app.use('/api/notifications', authenticateToken, notificationRoutes);
+app.use('/api/ai-matching', authenticateToken, aiMatchingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

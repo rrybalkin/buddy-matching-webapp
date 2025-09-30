@@ -17,8 +17,14 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
     position: '',
     location: '',
     startDate: '',
-    bio: ''
+    bio: '',
+    phone: '',
+    timezone: '',
+    interests: [] as string[],
+    languages: [] as string[]
   })
+  const [interestInput, setInterestInput] = useState('')
+  const [languageInput, setLanguageInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showTempPassword, setShowTempPassword] = useState(false)
   const [tempPassword, setTempPassword] = useState('')
@@ -61,10 +67,44 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }))
+  }
+
+  const handleAddInterest = () => {
+    if (interestInput.trim() && !formData.interests.includes(interestInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        interests: [...prev.interests, interestInput.trim()]
+      }))
+      setInterestInput('')
+    }
+  }
+
+  const handleRemoveInterest = (interest: string) => {
+    setFormData(prev => ({
+      ...prev,
+      interests: prev.interests.filter(i => i !== interest)
+    }))
+  }
+
+  const handleAddLanguage = () => {
+    if (languageInput.trim() && !formData.languages.includes(languageInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        languages: [...prev.languages, languageInput.trim()]
+      }))
+      setLanguageInput('')
+    }
+  }
+
+  const handleRemoveLanguage = (language: string) => {
+    setFormData(prev => ({
+      ...prev,
+      languages: prev.languages.filter(l => l !== language)
     }))
   }
 
@@ -78,8 +118,14 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
         position: '',
         location: '',
         startDate: '',
-        bio: ''
+        bio: '',
+        phone: '',
+        timezone: '',
+        interests: [],
+        languages: []
       })
+      setInterestInput('')
+      setLanguageInput('')
       setShowTempPassword(false)
       setTempPassword('')
       setEmailSent(false)
@@ -329,6 +375,144 @@ export default function CreateNewcomerModal({ isOpen, onClose }: CreateNewcomerM
                         className="input-field mt-1"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="input-field mt-1"
+                        placeholder="e.g. +1 (555) 123-4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Timezone
+                      </label>
+                      <select
+                        name="timezone"
+                        value={formData.timezone}
+                        onChange={handleChange}
+                        className="input-field mt-1"
+                      >
+                        <option value="">Select timezone</option>
+                        <option value="UTC-12">UTC-12 (Baker Island)</option>
+                        <option value="UTC-11">UTC-11 (American Samoa)</option>
+                        <option value="UTC-10">UTC-10 (Hawaii)</option>
+                        <option value="UTC-9">UTC-9 (Alaska)</option>
+                        <option value="UTC-8">UTC-8 (Pacific Time)</option>
+                        <option value="UTC-7">UTC-7 (Mountain Time)</option>
+                        <option value="UTC-6">UTC-6 (Central Time)</option>
+                        <option value="UTC-5">UTC-5 (Eastern Time)</option>
+                        <option value="UTC-4">UTC-4 (Atlantic Time)</option>
+                        <option value="UTC-3">UTC-3 (Brazil)</option>
+                        <option value="UTC-2">UTC-2 (Mid-Atlantic)</option>
+                        <option value="UTC-1">UTC-1 (Azores)</option>
+                        <option value="UTC+0">UTC+0 (Greenwich)</option>
+                        <option value="UTC+1">UTC+1 (Central European)</option>
+                        <option value="UTC+2">UTC+2 (Eastern European)</option>
+                        <option value="UTC+3">UTC+3 (Moscow)</option>
+                        <option value="UTC+4">UTC+4 (Gulf)</option>
+                        <option value="UTC+5">UTC+5 (Pakistan)</option>
+                        <option value="UTC+6">UTC+6 (Bangladesh)</option>
+                        <option value="UTC+7">UTC+7 (Thailand)</option>
+                        <option value="UTC+8">UTC+8 (China)</option>
+                        <option value="UTC+9">UTC+9 (Japan)</option>
+                        <option value="UTC+10">UTC+10 (Australia)</option>
+                        <option value="UTC+11">UTC+11 (Solomon Islands)</option>
+                        <option value="UTC+12">UTC+12 (New Zealand)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Interests
+                    </label>
+                    <div className="mt-1 flex space-x-2">
+                      <input
+                        type="text"
+                        value={interestInput}
+                        onChange={(e) => setInterestInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
+                        className="input-field flex-1"
+                        placeholder="e.g. hiking, photography, cooking"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddInterest}
+                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {formData.interests.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {formData.interests.map((interest, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {interest}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveInterest(interest)}
+                              className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-500"
+                            >
+                              <XMarkIcon className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Languages
+                    </label>
+                    <div className="mt-1 flex space-x-2">
+                      <input
+                        type="text"
+                        value={languageInput}
+                        onChange={(e) => setLanguageInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLanguage())}
+                        className="input-field flex-1"
+                        placeholder="e.g. English, Spanish, French"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddLanguage}
+                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {formData.languages.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {formData.languages.map((language, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                          >
+                            {language}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLanguage(language)}
+                              className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-green-400 hover:bg-green-200 hover:text-green-500"
+                            >
+                              <XMarkIcon className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div>

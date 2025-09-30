@@ -188,7 +188,11 @@ router.get("/newcomers", requireRole(["HR"]), async (req: AuthRequest, res: Resp
             position: true,
             location: true,
             startDate: true,
-            bio: true
+            bio: true,
+            phone: true,
+            timezone: true,
+            interests: true,
+            languages: true
           }
         }
       },
@@ -259,7 +263,11 @@ router.post('/newcomers', requireRole(['HR']), [
   body('position').optional().trim(),
   body('location').optional().trim(),
   body('startDate').optional().isISO8601(),
-  body('bio').optional().trim().isLength({ max: 500 })
+  body('bio').optional().trim().isLength({ max: 500 }),
+  body('phone').optional().trim().isLength({ max: 20 }),
+  body('timezone').optional().trim().isLength({ max: 50 }),
+  body('interests').optional().isArray(),
+  body('languages').optional().isArray()
 ], async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -267,7 +275,7 @@ router.post('/newcomers', requireRole(['HR']), [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { firstName, lastName, email, department, position, location, startDate, bio } = req.body;
+    const { firstName, lastName, email, department, position, location, startDate, bio, phone, timezone, interests, languages } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -294,15 +302,19 @@ router.post('/newcomers', requireRole(['HR']), [
     });
 
     // Create profile if additional info provided
-    if (department || position || location || startDate || bio) {
+    if (department || position || location || startDate || bio || phone || timezone || interests || languages) {
       await prisma.userProfile.create({
         data: {
           userId: user.id,
           department,
           position,
           location,
-          startDate: startDate ? new Date(startDate) : null,
-          bio
+          startDate: startDate && startDate.trim() !== '' ? new Date(startDate) : null,
+          bio,
+          phone,
+          timezone,
+          interests: interests || [],
+          languages: languages || []
         }
       });
     }
@@ -315,8 +327,12 @@ router.post('/newcomers', requireRole(['HR']), [
         department,
         position,
         location,
-        startDate: startDate ? new Date(startDate) : null,
-        bio
+        startDate: startDate && startDate.trim() !== '' ? new Date(startDate) : null,
+        bio,
+        phone,
+        timezone,
+        interests: interests || [],
+        languages: languages || []
       }
     });
   } catch (error) {
@@ -381,7 +397,11 @@ router.patch('/newcomers/:id', requireRole(['HR']), [
   body('position').optional().trim(),
   body('location').optional().trim(),
   body('startDate').optional().isISO8601(),
-  body('bio').optional().trim().isLength({ max: 500 })
+  body('bio').optional().trim().isLength({ max: 500 }),
+  body('phone').optional().trim().isLength({ max: 20 }),
+  body('timezone').optional().trim().isLength({ max: 50 }),
+  body('interests').optional().isArray(),
+  body('languages').optional().isArray()
 ], async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -418,6 +438,14 @@ router.patch('/newcomers/:id', requireRole(['HR']), [
 
     // Update or create profile
     if (Object.keys(profileData).length > 0) {
+      // Handle startDate conversion - convert empty string to null
+      const processedProfileData = {
+        ...profileData,
+        startDate: profileData.startDate && profileData.startDate.trim() !== '' 
+          ? new Date(profileData.startDate) 
+          : null
+      };
+
       const existingProfile = await prisma.userProfile.findUnique({
         where: { userId: id }
       });
@@ -425,13 +453,13 @@ router.patch('/newcomers/:id', requireRole(['HR']), [
       if (existingProfile) {
         await prisma.userProfile.update({
           where: { userId: id },
-          data: profileData
+          data: processedProfileData
         });
       } else {
         await prisma.userProfile.create({
           data: {
             userId: id,
-            ...profileData
+            ...processedProfileData
           }
         });
       }

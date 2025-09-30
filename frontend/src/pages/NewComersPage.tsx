@@ -3,8 +3,10 @@ import { useQuery } from 'react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
 import { useDebounce } from '../hooks/useDebounce'
-import { MagnifyingGlassIcon, PlusIcon, UserIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, PlusIcon, UserIcon, PencilIcon, SparklesIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import CreateNewcomerModal from '../components/CreateNewcomerModal'
+import EditNewcomerModal from '../components/EditNewcomerModal'
+import AISuggestionsModal from '../components/AISuggestionsModal'
 import CreateMatchModal from '../components/CreateMatchModal'
 
 export default function NewComersPage() {
@@ -18,7 +20,11 @@ export default function NewComersPage() {
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAISuggestionsModalOpen, setIsAISuggestionsModalOpen] = useState(false)
   const [selectedNewcomer, setSelectedNewcomer] = useState<{id: string, name: string} | null>(null)
+  const [editingNewcomer, setEditingNewcomer] = useState<any>(null)
+  const [aiSuggestionsNewcomer, setAISuggestionsNewcomer] = useState<any>(null)
   const [isMatchModalOpen, setIsMatchModalOpen] = useState(false)
 
   // Debounced filters for API calls (delayed updates)
@@ -42,6 +48,26 @@ export default function NewComersPage() {
 
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false)
+  }
+
+  const handleEditNewcomer = (newcomer: any) => {
+    setEditingNewcomer(newcomer)
+    setIsEditModalOpen(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditingNewcomer(null)
+  }
+
+  const handleAISuggestions = (newcomer: any) => {
+    setAISuggestionsNewcomer(newcomer)
+    setIsAISuggestionsModalOpen(true)
+  }
+
+  const handleCloseAISuggestionsModal = () => {
+    setIsAISuggestionsModalOpen(false)
+    setAISuggestionsNewcomer(null)
   }
 
   const handleAssignBuddy = (newcomerId: string, newcomerName: string) => {
@@ -134,7 +160,22 @@ export default function NewComersPage() {
 
         {/* NewComer Cards */}
         {newcomers?.map((newcomer: any) => (
-          <div key={newcomer.id} className="card flex flex-col h-full" data-testid="newcomer-card">
+          <div key={newcomer.id} className="card flex flex-col h-full relative" data-testid="newcomer-card">
+            {/* Status badge at the top */}
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                {getStatusBadge(newcomer.buddyStatus, newcomer.assignedBuddy)}
+              </div>
+              {/* Edit button in top-right corner */}
+              <button
+                onClick={() => handleEditNewcomer(newcomer)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                title="Edit newcomer profile"
+              >
+                <PencilIcon className="h-5 w-5" />
+              </button>
+            </div>
+
             <div className="flex items-center space-x-3 mb-4">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -178,14 +219,56 @@ export default function NewComersPage() {
                   </span>
                 </div>
               )}
+              {newcomer.profile?.phone && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="font-medium">Phone:</span>
+                  <span className="ml-2">{newcomer.profile.phone}</span>
+                </div>
+              )}
+              {newcomer.profile?.timezone && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="font-medium">Timezone:</span>
+                  <span className="ml-2">{newcomer.profile.timezone}</span>
+                </div>
+              )}
             </div>
 
-            <div className="mb-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">Status:</span>
-                {getStatusBadge(newcomer.buddyStatus, newcomer.assignedBuddy)}
+            {/* Interests and Languages */}
+            {(newcomer.profile?.interests?.length > 0 || newcomer.profile?.languages?.length > 0) && (
+              <div className="mb-4 space-y-2">
+                {newcomer.profile?.interests?.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Interests:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {newcomer.profile.interests.map((interest: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {interest}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {newcomer.profile?.languages?.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Languages:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {newcomer.profile.languages.map((language: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                        >
+                          {language}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
 
             {newcomer.profile?.bio && (
               <div className="mb-4">
@@ -196,12 +279,20 @@ export default function NewComersPage() {
             )}
 
             {newcomer.buddyStatus !== 'assigned' && (
-              <div className="flex space-x-2 mt-auto">
+              <div className="flex flex-row space-x-2 mt-auto">
                 <button 
                   onClick={() => handleAssignBuddy(newcomer.id, `${newcomer.firstName} ${newcomer.lastName}`)}
-                  className="btn-primary flex-1"
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
-                  Assign Buddy
+                  <UserPlusIcon className="h-4 w-4 mr-2" />
+                  Manual Match
+                </button>
+                <button 
+                  onClick={() => handleAISuggestions(newcomer)}
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  <SparklesIcon className="h-4 w-4 mr-2" />
+                  AI Match
                 </button>
               </div>
             )}
@@ -224,6 +315,24 @@ export default function NewComersPage() {
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
       />
+
+      {/* Edit Newcomer Modal */}
+      {editingNewcomer && (
+        <EditNewcomerModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          newcomer={editingNewcomer}
+        />
+      )}
+
+      {/* AI Suggestions Modal */}
+      {aiSuggestionsNewcomer && (
+        <AISuggestionsModal
+          isOpen={isAISuggestionsModalOpen}
+          onClose={handleCloseAISuggestionsModal}
+          newcomer={aiSuggestionsNewcomer}
+        />
+      )}
 
       {/* Create Match Modal */}
       {selectedNewcomer && (

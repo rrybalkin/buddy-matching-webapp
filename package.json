@@ -4,7 +4,9 @@
   "description": "A web application for HR and veteran employees to coordinate buddy matches for newcomers",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:local": "concurrently \"npm run dev:backend:local\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
+    "dev:backend:local": "cd backend && npm run dev:local",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
